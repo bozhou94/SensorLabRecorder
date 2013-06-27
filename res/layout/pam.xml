@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical"
+    android:background="@drawable/header_pattern">
+	<TextView
+	    android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:textAppearance="?android:attr/textAppearanceMediumInverse"
+		android:text="Touch how you feel right now"
+		android:gravity="center"
+		android:layout_marginTop="10dip"
+		android:layout_marginBottom="10dip" />
+	<GridView
+		android:id="@+id/pam_grid"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:gravity="center"
+		android:numColumns="4"
+		android:stretchMode="columnWidth" />
+	<Button
+	    android:id="@+id/pam_reload"
+	    android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="Load more pictures"
+		android:layout_marginTop="20dip" />
+</LinearLayout>

@@ -1,0 +1,9 @@
+<probes xmlns:probe="http://schemas.android.com/apk/res-auto" >
+
+    <probe
+        probe:observerId="edu.dartmouth.cs.audiorecorder"
+        probe:observerName="StressSense"
+        probe:observerVersionCode="2013062600"
+        probe:observerVersionName="1.0" />
+
+</probes>

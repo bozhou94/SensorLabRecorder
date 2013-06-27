@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="Settings" >
+        <CheckBoxPreference
+            android:key="pref_onoff"
+            android:summary="StressSense is currently disabled"
+            android:summaryOn="StressSense is currently enabled"
+            android:title="StressSense" />
+        <!-- 
+        <CheckBoxPreference
+            android:key="pref_loc"
+            android:title="Enable location services" />
+         -->
+        <Preference
+            android:summary="Tap here to set blackout times"
+            android:title="Blackout times"
+            android:id="@+id/blackout"
+            android:key="pref_key" >
+        </Preference>
+    </PreferenceCategory>
+
+</PreferenceScreen>

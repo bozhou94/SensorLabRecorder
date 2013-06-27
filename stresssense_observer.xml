@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<observer>
+    <id>edu.dartmouth.cs.audiorecorder</id>
+    <version>2013062600</version>
+
+    <name>StressSense</name>
+    <description>A probe that tracks information retrieved by StressSense.</description>
+    <versionString>1.0</versionString>
+
+    <stream>
+        <id>stresssense</id>
+        <version>2012071200</version>
+
+        <name>StressSense</name>
+        <description>Inferred level of stress</description>
+
+	<metadata>
+            <timestamp />
+        </metadata>
+
+        <schema>
+            {
+                "type":"object",
+                "doc":"records level of stress.",
+                "schema":[
+                    {
+                        "name":"mode",
+                        "doc":"interpretation",
+                        "type":"string"
+                    }
+                ]
+            }
+        </schema>
+    </stream>
+</observer>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, SensorlabRecorderActivity!</string>
+    <string name="app_name">StressSense</string>
+    <string name="foreground_service_started">Audio recording in progress.</string>
+    <string name="local_service_label">Sensorlab AudioRecorder</string>
+    <string name="service_status">The audio recorder is currently: %s</string>
+    <string name="blackout">Tap here to set blackout times</string>
+        <!--  StressSense -->
+    <string name="stresssense_missing_desc">Please make sure the StressSense package is installed.</string>
+    <string name="stresssense_market_btn_label">Install StressSense</string>
+    <string name="stresssense_market_link"></string>
+    <string name="service_status">The audio recorder is currently: </string>
+</resources>

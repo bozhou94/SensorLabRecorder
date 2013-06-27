@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, SensorlabRecorderActivity!</string>
+    <string name="app_name">StressSense</string>
+    <string name="foreground_service_started">Audio recording in progress.</string>
+    <string name="local_service_label">Sensorlab AudioRecorder</string>
+    <string name="service_status">The audio recorder is currently: %s</string>
+</resources>
