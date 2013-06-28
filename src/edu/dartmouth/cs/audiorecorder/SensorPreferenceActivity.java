@@ -95,6 +95,7 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 
 	@Override
 	protected void onDestroy() {
+		super.onDestroy();
 		unregisterReceiver(mActivityLoaded);
 		unregisterReceiver(mActivityon);
 		sMessageHandler = null;
