@@ -3,7 +3,6 @@ package edu.dartmouth.cs.audiorecorder;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.UUID;
 
 import org.ohmage.mobility.blackout.Blackout;
 import org.ohmage.mobility.blackout.BlackoutDesc;
@@ -13,8 +12,6 @@ import org.ohmage.mobility.blackout.ui.TriggerListActivity;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.ProbeBuilder;
 import org.ohmage.probemanager.StressSenseProbeWriter;
-
-import edu.dartmouth.cs.audiorecorder.SensorlabRecorderActivity.AudioRecorderStatusRecevier;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -27,7 +24,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceClickListener;

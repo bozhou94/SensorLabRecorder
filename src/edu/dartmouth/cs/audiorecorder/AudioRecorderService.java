@@ -141,7 +141,7 @@ public class AudioRecorderService extends Service {
 		Notification notification = new Notification(R.drawable.icon, text,
 				System.currentTimeMillis());
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				new Intent(this, SensorlabRecorderActivity.class), 0);
+				new Intent(this, SensorPreferenceActivity.class), 0);
 		notification.setLatestEventInfo(this,
 				getText(R.string.local_service_label), text, contentIntent);
 		startForeground(R.string.foreground_service_started, notification);
