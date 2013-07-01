@@ -11,9 +11,6 @@ import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import edu.dartmouth.cs.audiorecorder.AudioRecorderService;
 import edu.dartmouth.cs.audiorecorder.R;
-import edu.dartmouth.cs.audiorecorder.R.drawable;
-import edu.dartmouth.cs.audiorecorder.R.id;
-import edu.dartmouth.cs.audiorecorder.R.layout;
 import edu.dartmouth.cs.audiorecorder.SensorPreferenceActivity;
 
 import android.app.Activity;
@@ -21,13 +18,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.view.View;
-import android.view.View.OnClickListener;
+import android.preference.PreferenceManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -55,9 +51,11 @@ public class StressActivity extends Activity {
 		myListView.setAdapter(mAdapter);
 
 		// Send signals to StressSense to see the status
-		Intent i = new Intent();
-		i.setAction(SensorPreferenceActivity.ACTIVITY_LOADED);
-		sendBroadcast(i);
+		SharedPreferences prefs = PreferenceManager
+				.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean(SensorPreferenceActivity.IS_ON, false))
+			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
+					R.drawable.mic_on, 0, 0, 0);
 		
 		probeWriter = new StressSenseProbeWriter(this);
 		probeWriter.connect();
@@ -86,46 +84,45 @@ public class StressActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
-			if (intent.getAction().equals(AudioRecorderService.AUDIORECORDER_ON))
+			if (intent.getAction()
+					.equals(AudioRecorderService.AUDIORECORDER_ON))
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_on, 0, 0, 0);
-			 else if (intent.getAction().equals(AudioRecorderService.AUDIORECORDER_OFF)) 
+			else if (intent.getAction().equals(
+					AudioRecorderService.AUDIORECORDER_OFF))
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_off, 0, 0, 0);
 		}
 	}
 
-
 	/*-------------------------------HANDLER FUNCTIONALITY-------------------------------*/
 
 	private String message;
-	
+
 	Handler mHandler = new Handler() {
 		@Override
-		public void handleMessage(Message msg) {			
+		public void handleMessage(Message msg) {
 			message = msg.getData().getString(
-					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);	
+					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);
 			mTvGenericText.setText(": " + message);
 			if (counter == 0) {
 				if (mList.size() > 10)
 					mList.removeLast();
-				mList.addFirst(new SimpleDateFormat("h:mm a")
-						.format(Calendar.getInstance().getTime())
-						+ ": "
-						+ message);
+				mList.addFirst(new SimpleDateFormat("h:mm a").format(Calendar
+						.getInstance().getTime()) + ": " + message);
 				mAdapter.notifyDataSetChanged();
 				counter++;
 			} else if (counter < 55)
 				counter++;
 			else
 				counter = 0;
-			if(probeWriter != null) {
+			if (probeWriter != null) {
 				ProbeBuilder probe = new ProbeBuilder();
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 				String nowAsString = df.format(new Date());
 				probe.withTimestamp(nowAsString);
 				probeWriter.write(probe, message);
-	        }
+			}
 		}
 	};
 

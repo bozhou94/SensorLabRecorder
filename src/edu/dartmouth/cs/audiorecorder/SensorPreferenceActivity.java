@@ -34,7 +34,6 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 	public static final String BLACKOUT_KEY = "pref_key";
 	//public static final String LOCATION_KEY = "pref_loc";
 	public static final String IS_ON = "stresssense_on";
-	public static final String ACTIVITY_LOADED = "edu.dartmouth.besafe.Activity.intent.LOADED";
 
 	private boolean running = false;
 	private Preference connectionPref;
@@ -54,9 +53,6 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		
 		connectionPref = findPreference(BLACKOUT_KEY);
 		connectionPref.setOnPreferenceClickListener(mOnClickListener);
-		
-		mActivityLoaded = new ActivityLoadedReceiver();
-		registerReceiver(mActivityLoaded, new IntentFilter(ACTIVITY_LOADED));
 	}
 
 	@Override
@@ -77,12 +73,6 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		getPreferenceScreen().getSharedPreferences()
 				.unregisterOnSharedPreferenceChangeListener(this);
 
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		unregisterReceiver(mActivityLoaded);
 	}
 
 	/*-------------------------------PREFERENCE FUNCTIONALITY-------------------------------*/
@@ -191,24 +181,5 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		if (runningNow)
 			stopRunning(context, false);
 		// LogProbe.close(context);
-	}
-
-	/*-------------------------------BROADCASTRECEIVER FUNCTIONALITY-------------------------------*/
-	
-	private ActivityLoadedReceiver mActivityLoaded;
-
-	class ActivityLoadedReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(ACTIVITY_LOADED)) {
-				Intent i = new Intent();
-				if (running)
-					i.setAction(AudioRecorderService.AUDIORECORDER_ON);
-				else
-					i.setAction(AudioRecorderService.AUDIORECORDER_OFF);
-				sendBroadcast(i);
-			}
-		}
 	}
 }
