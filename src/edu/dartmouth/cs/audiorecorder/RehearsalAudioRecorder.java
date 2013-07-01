@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import edu.dartmouth.cs.audiorecorder.analytics.StressActivity;
 import edu.dartmouth.cs.mltoolkit.processing.*;
 
 public class RehearsalAudioRecorder {
@@ -632,7 +633,7 @@ public class RehearsalAudioRecorder {
 	}
 
 	private void setActivityText(final String text) {
-		Handler handler = SensorPreferenceActivity.getHandler();
+		Handler handler = StressActivity.getHandler();
 		if (null != handler) {
 			Message m = new Message();
 			Bundle data = new Bundle();

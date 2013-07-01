@@ -22,8 +22,6 @@ import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceClickListener;
@@ -37,13 +35,10 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 	//public static final String LOCATION_KEY = "pref_loc";
 	public static final String IS_ON = "stresssense_on";
 	public static final String ACTIVITY_LOADED = "edu.dartmouth.besafe.Activity.intent.LOADED";
-	public static final String ACTIVITY_ON = "edu.dartmouth.besafe.Activity.intent.ON";
 
 	private boolean running = false;
-	private String message;
 	private Preference connectionPref;
 	//private CheckBoxPreference mobility_on;
-	private static StressSenseProbeWriter probeWriter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,12 +56,7 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		connectionPref.setOnPreferenceClickListener(mOnClickListener);
 		
 		mActivityLoaded = new ActivityLoadedReceiver();
-		mActivityon = new ActivityOnReceiver();
 		registerReceiver(mActivityLoaded, new IntentFilter(ACTIVITY_LOADED));
-		registerReceiver(mActivityon, new IntentFilter(ACTIVITY_ON));
-		sMessageHandler = mHandler;
-		probeWriter = new StressSenseProbeWriter(this);
-		probeWriter.connect();
 	}
 
 	@Override
@@ -93,9 +83,6 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 	protected void onDestroy() {
 		super.onDestroy();
 		unregisterReceiver(mActivityLoaded);
-		unregisterReceiver(mActivityon);
-		sMessageHandler = null;
-		probeWriter.close();
 	}
 
 	/*-------------------------------PREFERENCE FUNCTIONALITY-------------------------------*/
@@ -126,29 +113,6 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 				SensorPreferenceActivity.stop(SensorPreferenceActivity.this
 						.getApplicationContext());
 		}
-	}
-
-	/*-------------------------------HANDLER FUNCTIONALITY-------------------------------*/
-
-	Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {			
-			message = msg.getData().getString(
-					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);		
-			if(probeWriter != null) {
-				ProbeBuilder probe = new ProbeBuilder();
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-				String nowAsString = df.format(new Date());
-				probe.withTimestamp(nowAsString);
-				probeWriter.write(probe, message);
-	        }
-		}
-	};
-
-	private static Handler sMessageHandler;
-
-	public static Handler getHandler() {
-		return sMessageHandler;
 	}
 
 	/*-------------------------------BLACKOUT FUNCTIONALITY-------------------------------*/
@@ -232,7 +196,6 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 	/*-------------------------------BROADCASTRECEIVER FUNCTIONALITY-------------------------------*/
 	
 	private ActivityLoadedReceiver mActivityLoaded;
-	private ActivityOnReceiver mActivityon;
 
 	class ActivityLoadedReceiver extends BroadcastReceiver {
 
@@ -248,15 +211,4 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 			}
 		}
 	}
-
-	class ActivityOnReceiver extends BroadcastReceiver {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Intent i = new Intent();
-			i.setAction(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);
-			i.putExtra("Mode", message);
-			sendBroadcast(i);
-		}
-	}
-
 }
