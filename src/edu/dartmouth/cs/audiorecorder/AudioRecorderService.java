@@ -162,8 +162,10 @@ public class AudioRecorderService extends Service {
 							SimpleTime end = conf.getRangeEnd();
 							SimpleTime now = new SimpleTime();
 							if (!start.isAfter(now) && !end.isBefore(now)) {
-								if (isRecording)
+								if (isRecording) {
 									stopRecording(true);
+									isRecording = false;
+								}
 								handler.postDelayed(Blackout, 45000);
 								return;
 							}
