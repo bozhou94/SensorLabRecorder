@@ -3,11 +3,11 @@ package edu.dartmouth.cs.audiorecorder;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.ohmage.mobility.blackout.Blackout;
 import org.ohmage.mobility.blackout.BlackoutDesc;
 import org.ohmage.mobility.blackout.base.TriggerDB;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
@@ -90,7 +90,10 @@ public class AudioRecorderService extends Service {
 	private TriggerDB db;
 	private Cursor c;
 	private boolean isRecording = false;
-
+	
+	// Audio Processing Log History (Used in Analytics/StressActivity)
+	public static LinkedList<String> changeHistory = new LinkedList<String>();
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;

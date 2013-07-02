@@ -1,9 +1,5 @@
 package edu.dartmouth.cs.audiorecorder.analytics;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.LinkedList;
-
 import edu.dartmouth.cs.audiorecorder.AudioRecorderService;
 import edu.dartmouth.cs.audiorecorder.R;
 import edu.dartmouth.cs.audiorecorder.SensorPreferenceActivity;
@@ -24,15 +20,13 @@ import android.widget.TextView;
 /**
  * This is the analytic portion of StressSense.
  * 
- * Displays: 
- * 		Status of the current processed audio History of the previous
- * 		processed audio statuses
+ * Displays: Status of the current processed audio History of the previous
+ * processed audio statuses
  */
 public class StressActivity extends Activity {
 
 	// Layout Components
 	private TextView mTvGenericText;
-	private LinkedList<String> mList;
 	private ArrayAdapter<String> mAdapter;
 
 	// Used for status writing
@@ -51,10 +45,10 @@ public class StressActivity extends Activity {
 
 		mTvGenericText = (TextView) findViewById(R.id.tvStatus);
 
-		mList = new LinkedList<String>();
 		ListView myListView = (ListView) findViewById(R.id.list);
 		mAdapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_list_item_1, mList);
+				android.R.layout.simple_list_item_1,
+				AudioRecorderService.changeHistory);
 		myListView.setAdapter(mAdapter);
 
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
@@ -112,28 +106,17 @@ public class StressActivity extends Activity {
 	 */
 	Handler mHandler = new Handler() {
 
-		private String prevTime;
-		
 		@Override
 		public void handleMessage(Message msg) {
 			String text = msg.getData().getString(
 					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);
-			
+
 			if (!text.equals(message)) {
 				message = text;
 				mTvGenericText.setText(": " + message);
 			}
-			
-			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
-					.getInstance().getTime());
-			
-			if (prevTime == null || !prevTime.equals(curTime)) {
-				mList.addFirst(curTime + ": " + message);
-				if (mList.size() > 10)
-					mList.removeLast();
-				prevTime = curTime;
-				mAdapter.notifyDataSetChanged();
-			}
+
+			mAdapter.notifyDataSetChanged();
 		}
 	};
 

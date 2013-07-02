@@ -85,7 +85,11 @@ public class RehearsalAudioRecorder {
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
 	
+	// Used for uploading the information
 	private static StressSenseProbeWriter probeWriter;
+	
+	// Used for analytics
+	private String prevTime;
 
 	/**
 	 * 
@@ -642,7 +646,7 @@ public class RehearsalAudioRecorder {
 
 	/**
 	 * Notifies the handler of the analytic activity of the current status
-	 */
+	 */	
 	private void setActivityText(final String text) {
 
 		if (probeWriter != null) {
@@ -652,6 +656,15 @@ public class RehearsalAudioRecorder {
 			probe.withTimestamp(nowAsString);
 			probeWriter.write(probe, text);
 			
+		}
+		
+		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
+				.getInstance().getTime());
+		if (prevTime == null || !prevTime.equals(curTime)) {
+			AudioRecorderService.changeHistory.addFirst(curTime + ": " + text);
+			if (AudioRecorderService.changeHistory.size() > 10)
+				AudioRecorderService.changeHistory.removeLast();
+			prevTime = curTime;
 		}
 		
 		Handler handler = StressActivity.getHandler();
