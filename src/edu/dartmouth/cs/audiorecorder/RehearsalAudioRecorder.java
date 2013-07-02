@@ -6,8 +6,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
+
+import org.ohmage.probemanager.ProbeBuilder;
+import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -79,6 +84,8 @@ public class RehearsalAudioRecorder {
 	private CircularBufferFeatExtractionInference<AudioData> cirBuffer;
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
+	
+	private static StressSenseProbeWriter probeWriter;
 
 	/**
 	 * 
@@ -132,11 +139,6 @@ public class RehearsalAudioRecorder {
 		}
 	};
 
-	public RehearsalAudioRecorder(int audioSource, int sampleRate,
-			int channelConfig, int audioFormat) {
-		this(audioSource, sampleRate, channelConfig, audioFormat, false);
-	}
-
 	/**
 	 * 
 	 * 
@@ -147,7 +149,7 @@ public class RehearsalAudioRecorder {
 	 * but the state is set to ERROR
 	 * 
 	 */
-	public RehearsalAudioRecorder(int audioSource, int sampleRate,
+	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter, int audioSource, int sampleRate,
 			int channelConfig, int audioFormat, boolean writeToFile) {
 		mWriteToFile = writeToFile;
 		aChannelConfig = channelConfig;
@@ -209,6 +211,8 @@ public class RehearsalAudioRecorder {
 			state = State.INITIALIZING;
 			cirBuffer = new CircularBufferFeatExtractionInference<AudioData>(
 					null, 100);
+			
+			probeWriter = probewriter;
 					
 		} catch (Exception e) {
 			if (e.getMessage() != null) {
@@ -640,6 +644,16 @@ public class RehearsalAudioRecorder {
 	 * Notifies the handler of the analytic activity of the current status
 	 */
 	private void setActivityText(final String text) {
+
+		if (probeWriter != null) {
+			ProbeBuilder probe = new ProbeBuilder();
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+			String nowAsString = df.format(new Date());
+			probe.withTimestamp(nowAsString);
+			probeWriter.write(probe, text);
+			
+		}
+		
 		Handler handler = StressActivity.getHandler();
 		if (null != handler) {
 			Message m = new Message();

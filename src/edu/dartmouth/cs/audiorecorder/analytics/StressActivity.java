@@ -1,13 +1,8 @@
 package edu.dartmouth.cs.audiorecorder.analytics;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
-
-import org.ohmage.probemanager.ProbeBuilder;
-import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import edu.dartmouth.cs.audiorecorder.AudioRecorderService;
 import edu.dartmouth.cs.audiorecorder.R;
@@ -40,8 +35,7 @@ public class StressActivity extends Activity {
 	private LinkedList<String> mList;
 	private ArrayAdapter<String> mAdapter;
 
-	// Used for upload stream and status writing
-	private static StressSenseProbeWriter probeWriter;
+	// Used for status writing
 	private static Handler sMessageHandler;
 	private String message;
 
@@ -67,9 +61,6 @@ public class StressActivity extends Activity {
 				SensorPreferenceActivity.IS_ON, false))
 			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 					R.drawable.mic_on, 0, 0, 0);
-
-		probeWriter = new StressSenseProbeWriter(this);
-		probeWriter.connect();
 	}
 
 	@Override
@@ -87,12 +78,6 @@ public class StressActivity extends Activity {
 		super.onStop();
 		unregisterReceiver(mAudioRecorderStatusReceiver);
 		sMessageHandler = null;
-	}
-
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		probeWriter.close();
 	}
 
 	/*--------------------------------BROADCASTRECEIVERS--------------------------------*/
@@ -120,7 +105,7 @@ public class StressActivity extends Activity {
 
 	/**
 	 * Receives data from setActivityText() in RehearsalAudioRecorder and
-	 * displays it to the user and writes it to the upload stream
+	 * displays it to the user
 	 * 
 	 * If nothing was added to the list in the previous minute, then the current
 	 * status is added, with the list storing a maximum of 10 statuses
@@ -148,14 +133,6 @@ public class StressActivity extends Activity {
 					mList.removeLast();
 				prevTime = curTime;
 				mAdapter.notifyDataSetChanged();
-			}
-			
-			if (probeWriter != null) {
-				ProbeBuilder probe = new ProbeBuilder();
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-				String nowAsString = df.format(new Date());
-				probe.withTimestamp(nowAsString);
-				probeWriter.write(probe, message);
 			}
 		}
 	};

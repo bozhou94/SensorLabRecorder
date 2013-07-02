@@ -7,6 +7,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.ohmage.probemanager.StressSenseProbeWriter;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -75,6 +77,7 @@ public class AudioRecorderService extends Service {
 	private Timer mTimer;
 	private IncomingCallDetector mIncomingCallDetector;
 	private OutgoingCallDetector mOutgoingCallDetector;
+	private StressSenseProbeWriter probeWriter;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -98,11 +101,14 @@ public class AudioRecorderService extends Service {
 					Process.THREAD_PRIORITY_BACKGROUND);
 			thread.start();
 
+			probeWriter = new StressSenseProbeWriter(this);
+			probeWriter.connect();
+			
 			// Get the HandlerThread's Looper and use it for our Handler
 			mServiceLooper = thread.getLooper();
 			mServiceHandler = new ServiceHandler(mServiceLooper);
 			isServiceRunning.set(true);
-			mWavAudioRecorder = new RehearsalAudioRecorder(AudioSource.MIC,
+			mWavAudioRecorder = new RehearsalAudioRecorder(probeWriter, AudioSource.MIC,
 					8000, AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT, false);
 
@@ -132,6 +138,7 @@ public class AudioRecorderService extends Service {
 		mWavAudioRecorder.release();
 		AudioRecorderService.isServiceRunning.set(false);
 		mServiceLooper.quit();
+		probeWriter.close();
 	}
 
 	@Override
