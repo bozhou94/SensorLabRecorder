@@ -1,22 +1,14 @@
 package edu.dartmouth.cs.audiorecorder;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.ohmage.mobility.blackout.Blackout;
 import org.ohmage.mobility.blackout.BlackoutDesc;
 import org.ohmage.mobility.blackout.base.TriggerDB;
 import org.ohmage.mobility.blackout.base.TriggerInit;
 import org.ohmage.mobility.blackout.ui.TriggerListActivity;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
-import org.ohmage.probemanager.ProbeBuilder;
-import org.ohmage.probemanager.StressSenseProbeWriter;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -26,31 +18,36 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceClickListener;
 
+/**
+ * This is the configuration portion of StressSense. 
+ * 
+ * Allows user to:
+ * 		Set blackout times-intervals in which StressSense is not active
+ * 		Turn on/off StressSense
+ */
 public class SensorPreferenceActivity extends PreferenceActivity implements
 		OnSharedPreferenceChangeListener {
 
+	// String for Blackout utility
 	public static final String STRESSSENSE = "stresssense";
+	
+	// Keys for Preference components
 	public static final String ONOFF_KEY = "pref_onoff";
 	public static final String BLACKOUT_KEY = "pref_key";
-	//public static final String LOCATION_KEY = "pref_loc";
+	
+	// Key for SharedPreferenceSettings for on/off status
 	public static final String IS_ON = "stresssense_on";
-
-	private boolean running = false;
+	
+	// Blackout Listing Preference
 	private Preference connectionPref;
-	//private CheckBoxPreference mobility_on;
+	
+	private boolean running = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-		
-		/*
-		mobility_on = (CheckBoxPreference) findPreference(LOCATION_KEY);
-		if (!MobilityHelper.isMobilityInstalled(this)) {
-			removePreference(mobility_on);
-		}*/
-		
-		
+
 		connectionPref = findPreference(BLACKOUT_KEY);
 		connectionPref.setOnPreferenceClickListener(mOnClickListener);
 	}
@@ -77,17 +74,9 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 
 	/*-------------------------------PREFERENCE FUNCTIONALITY-------------------------------*/
 
-	private final OnPreferenceClickListener mOnClickListener = new OnPreferenceClickListener() {
-
-		@Override
-		public boolean onPreferenceClick(Preference preference) {
-			Intent intent = new Intent(SensorPreferenceActivity.this,
-					TriggerListActivity.class);
-			SensorPreferenceActivity.this.startActivity(intent);
-			return false;
-		}
-	};
-
+	/**
+	 * Listener for the On/Off switch
+	 */
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
 			String key) {
@@ -105,50 +94,44 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		}
 	}
 
+	/**
+	 * Listener for the Blackout Listings
+	 */
+	private final OnPreferenceClickListener mOnClickListener = new OnPreferenceClickListener() {
+
+		@Override
+		public boolean onPreferenceClick(Preference preference) {
+			Intent intent = new Intent(SensorPreferenceActivity.this,
+					TriggerListActivity.class);
+			SensorPreferenceActivity.this.startActivity(intent);
+			return false;
+		}
+	};
+
 	/*-------------------------------BLACKOUT FUNCTIONALITY-------------------------------*/
 
-	public static void startRunning(Context context) {
+	public static void startRunning (Context context) {
 		context.startService(new Intent(context, AudioRecorderService.class));
 	}
-
-	public static void stopRunning(Context context, boolean blackout) {
+	
+	public static void stopRunning (Context context) {
 		context.stopService(new Intent(context, AudioRecorderService.class));
 	}
-
 	public static void start(Context context) {
-		TriggerDB db = new TriggerDB(context);
-		db.open();
-		boolean canRunNow = true;
-		Cursor c = db.getAllTriggers();
-		if (c.moveToFirst()) {
-			do {
-				int trigId = c
-						.getInt(c.getColumnIndexOrThrow(TriggerDB.KEY_ID));
-
-				String trigDesc = db.getTriggerDescription(trigId);
-				BlackoutDesc conf = new BlackoutDesc();
-
-				if (!conf.loadString(trigDesc)) {
-					continue;
-				}
-				SimpleTime start = conf.getRangeStart();
-				SimpleTime end = conf.getRangeEnd();
-				SimpleTime now = new SimpleTime();
-				if (!start.isAfter(now) && end.isAfter(now)) {
-					canRunNow = false;
-				}
-
-			} while (c.moveToNext());
-		}
-		c.close();
-		db.close();
-		TriggerInit.initTriggers(context);
-		if (canRunNow)
+		if (canRunNow(context, true))
 			startRunning(context);
 	}
 
 	public static void stop(Context context) {
+		if (canRunNow(context, false))
+			stopRunning(context);
+	}
 
+	/**
+	 * Determines whether or not the service can currently run based on blackout times
+	 * @param startCall if true, initializes triggers, otherwise stop triggers.
+	 */
+	private static boolean canRunNow(Context context, boolean startCall) {
 		TriggerDB db = new TriggerDB(context);
 		db.open();
 		boolean runningNow = true;
@@ -170,16 +153,17 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 				if (!start.isAfter(now) && !end.isBefore(now)) {
 					runningNow = false;
 				}
-				new Blackout().stopTrigger(context, trigId,
-						db.getTriggerDescription(trigId));
+
+				if (!startCall)
+					new Blackout().stopTrigger(context, trigId,
+							db.getTriggerDescription(trigId));
 
 			} while (c.moveToNext());
 		}
 		c.close();
 		db.close();
-		// TriggerInit.initTriggers(context);
-		if (runningNow)
-			stopRunning(context, false);
-		// LogProbe.close(context);
+		if (startCall)
+			TriggerInit.initTriggers(context);
+		return runningNow;
 	}
 }

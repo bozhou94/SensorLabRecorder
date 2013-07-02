@@ -18,7 +18,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -27,36 +26,48 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+/**
+ * This is the analytic portion of StressSense.
+ * 
+ * Displays: 
+ * 		Status of the current processed audio History of the previous
+ * 		processed audio statuses
+ */
 public class StressActivity extends Activity {
 
-	private static final String TAG = "StressActivity";
-
+	// Layout Components
 	private TextView mTvGenericText;
-	private AudioRecorderStatusRecevier mAudioRecorderStatusReceiver;
-	private int counter = 0;
 	private LinkedList<String> mList;
 	private ArrayAdapter<String> mAdapter;
+
+	// Used for upload stream and status writing
 	private static StressSenseProbeWriter probeWriter;
+	private static Handler sMessageHandler;
+	private String message;
+
+	// BroadcastReceiver for getting On/Off signals from the service
+	private AudioRecorderStatusRecevier mAudioRecorderStatusReceiver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_analytic);
+
 		mAudioRecorderStatusReceiver = new AudioRecorderStatusRecevier();
+
 		mTvGenericText = (TextView) findViewById(R.id.tvStatus);
+
 		mList = new LinkedList<String>();
 		ListView myListView = (ListView) findViewById(R.id.list);
 		mAdapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_list_item_1, mList);
 		myListView.setAdapter(mAdapter);
 
-		// Send signals to StressSense to see the status
-		SharedPreferences prefs = PreferenceManager
-				.getDefaultSharedPreferences(this);
-		if (prefs.getBoolean(SensorPreferenceActivity.IS_ON, false))
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				SensorPreferenceActivity.IS_ON, false))
 			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 					R.drawable.mic_on, 0, 0, 0);
-		
+
 		probeWriter = new StressSenseProbeWriter(this);
 		probeWriter.connect();
 	}
@@ -76,14 +87,24 @@ public class StressActivity extends Activity {
 		super.onStop();
 		unregisterReceiver(mAudioRecorderStatusReceiver);
 		sMessageHandler = null;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
 		probeWriter.close();
 	}
 
+	/*--------------------------------BROADCASTRECEIVERS--------------------------------*/
+
+	/**
+	 * Listens for the On/Off signals given by AudioRecorderService and displays
+	 * accordingly
+	 */
 	class AudioRecorderStatusRecevier extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-
 			if (intent.getAction()
 					.equals(AudioRecorderService.AUDIORECORDER_ON))
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
@@ -97,25 +118,38 @@ public class StressActivity extends Activity {
 
 	/*-------------------------------HANDLER FUNCTIONALITY-------------------------------*/
 
-	private String message;
-
+	/**
+	 * Receives data from setActivityText() in RehearsalAudioRecorder and
+	 * displays it to the user and writes it to the upload stream
+	 * 
+	 * If nothing was added to the list in the previous minute, then the current
+	 * status is added, with the list storing a maximum of 10 statuses
+	 */
 	Handler mHandler = new Handler() {
+
+		private String prevTime;
+		
 		@Override
 		public void handleMessage(Message msg) {
-			message = msg.getData().getString(
+			String text = msg.getData().getString(
 					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);
-			mTvGenericText.setText(": " + message);
-			if (counter == 0) {
+			
+			if (!text.equals(message)) {
+				message = text;
+				mTvGenericText.setText(": " + message);
+			}
+			
+			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
+					.getInstance().getTime());
+			
+			if (prevTime == null || !prevTime.equals(curTime)) {
+				mList.addFirst(curTime + ": " + message);
 				if (mList.size() > 10)
 					mList.removeLast();
-				mList.addFirst(new SimpleDateFormat("h:mm a").format(Calendar
-						.getInstance().getTime()) + ": " + message);
+				prevTime = curTime;
 				mAdapter.notifyDataSetChanged();
-				counter++;
-			} else if (counter < 55)
-				counter++;
-			else
-				counter = 0;
+			}
+			
 			if (probeWriter != null) {
 				ProbeBuilder probe = new ProbeBuilder();
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
@@ -125,8 +159,6 @@ public class StressActivity extends Activity {
 			}
 		}
 	};
-
-	private static Handler sMessageHandler;
 
 	public static Handler getHandler() {
 		return sMessageHandler;

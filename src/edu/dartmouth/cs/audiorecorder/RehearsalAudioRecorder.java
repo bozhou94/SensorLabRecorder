@@ -446,6 +446,10 @@ public class RehearsalAudioRecorder {
 
 	private AudioData audioFromQueueData;
 
+	
+	/**
+	 * PROCESSING DONE IN THIS THREAD 
+	 */
 	private class AudioProcessing extends Thread {
 
 		CircularBufferFeatExtractionInference<AudioData> obj;
@@ -632,6 +636,9 @@ public class RehearsalAudioRecorder {
 
 	}
 
+	/**
+	 * Notifies the handler of the analytic activity of the current status
+	 */
 	private void setActivityText(final String text) {
 		Handler handler = StressActivity.getHandler();
 		if (null != handler) {

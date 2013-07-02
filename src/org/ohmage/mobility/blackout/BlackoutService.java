@@ -89,7 +89,7 @@ public class BlackoutService extends Service
 				if (startEnd == 0)
 				{
 					//Log.v(TAG, "Blackout!");
-					SensorPreferenceActivity.stopRunning(this, true);
+					SensorPreferenceActivity.stopRunning(this);
 				}
 				else
 				{
@@ -376,7 +376,7 @@ public class BlackoutService extends Service
 		}
 		
 		if (elapsedRT0 <= 0 && elapsedRT1 > 0)
-			SensorPreferenceActivity.stopRunning(this, true); // If the phone is in a blackout now, stop it.
+			SensorPreferenceActivity.stopRunning(this); // If the phone is in a blackout now, stop it.
 
 		//Log.i(TAG, "Setting stop to start blackout for " + elapsedRT1 + " millis into the future");
 
