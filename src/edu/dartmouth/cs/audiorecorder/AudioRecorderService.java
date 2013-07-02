@@ -7,6 +7,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.ohmage.mobility.blackout.Blackout;
+import org.ohmage.mobility.blackout.BlackoutDesc;
+import org.ohmage.mobility.blackout.base.TriggerDB;
+import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.app.Notification;
@@ -16,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.MediaRecorder.AudioSource;
 import android.os.Bundle;
@@ -79,6 +84,13 @@ public class AudioRecorderService extends Service {
 	private OutgoingCallDetector mOutgoingCallDetector;
 	private StressSenseProbeWriter probeWriter;
 
+	// Blackout functionality
+	private Handler handler = new Handler();
+	private Runnable Blackout;
+	private TriggerDB db;
+	private Cursor c;
+	private boolean isRecording = false;
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
@@ -103,13 +115,13 @@ public class AudioRecorderService extends Service {
 
 			probeWriter = new StressSenseProbeWriter(this);
 			probeWriter.connect();
-			
+
 			// Get the HandlerThread's Looper and use it for our Handler
 			mServiceLooper = thread.getLooper();
 			mServiceHandler = new ServiceHandler(mServiceLooper);
 			isServiceRunning.set(true);
-			mWavAudioRecorder = new RehearsalAudioRecorder(probeWriter, AudioSource.MIC,
-					8000, AudioFormat.CHANNEL_IN_MONO,
+			mWavAudioRecorder = new RehearsalAudioRecorder(probeWriter,
+					AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT, false);
 
 			mIncomingCallDetector = new IncomingCallDetector();
@@ -119,7 +131,51 @@ public class AudioRecorderService extends Service {
 			registerReceiver(mOutgoingCallDetector, new IntentFilter(
 					Intent.ACTION_NEW_OUTGOING_CALL));
 
-			startRecoding(true);
+			/*
+			 * The Handler calls the Blackout runnable almost every minute to see if
+			 * the time coincides with a user-dictated Blackout time. It then
+			 * starts/stops recording accordingly.
+			 */
+			db = new TriggerDB(this);
+			db.open();
+			c = db.getAllTriggers();
+
+			Blackout = new Runnable() {
+				
+				@Override
+				public void run() {
+					if (c.moveToFirst()) {
+						do {
+							int trigId = c.getInt(c
+									.getColumnIndexOrThrow(TriggerDB.KEY_ID));
+
+							String trigDesc = db.getTriggerDescription(trigId);
+							BlackoutDesc conf = new BlackoutDesc();
+
+							if (!conf.loadString(trigDesc)) {
+								continue;
+							}
+							SimpleTime start = conf.getRangeStart();
+							SimpleTime end = conf.getRangeEnd();
+							SimpleTime now = new SimpleTime();
+							if (!start.isAfter(now) && !end.isBefore(now)) {
+								if (isRecording)
+									stopRecording(true);
+								handler.postDelayed(Blackout, 45000);
+								return;
+							}
+
+						} while (c.moveToNext());
+					}
+					if (!isRecording) {
+						startRecoding(true);
+						isRecording = true;
+					}
+					handler.postDelayed(Blackout, 45000);
+				}
+			};
+
+			handler.post(Blackout);
 
 		} catch (Exception e) {
 			Log.e(TAG, e.getMessage());
@@ -139,6 +195,9 @@ public class AudioRecorderService extends Service {
 		AudioRecorderService.isServiceRunning.set(false);
 		mServiceLooper.quit();
 		probeWriter.close();
+		handler.removeCallbacks(Blackout);
+		c.close();
+		db.close();
 	}
 
 	@Override
@@ -230,7 +289,7 @@ public class AudioRecorderService extends Service {
 			Intent i = new Intent();
 			i.setAction(AUDIORECORDER_ON);
 			sendBroadcast(i);
-			Log.i(TAG, "Recording started");  
+			Log.i(TAG, "Recording started");
 		}
 	}
 

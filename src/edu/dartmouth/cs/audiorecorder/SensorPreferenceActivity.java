@@ -101,6 +101,7 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 
 		@Override
 		public boolean onPreferenceClick(Preference preference) {
+			SensorPreferenceActivity.stop(SensorPreferenceActivity.this.getApplicationContext());
 			Intent intent = new Intent(SensorPreferenceActivity.this,
 					TriggerListActivity.class);
 			SensorPreferenceActivity.this.startActivity(intent);
