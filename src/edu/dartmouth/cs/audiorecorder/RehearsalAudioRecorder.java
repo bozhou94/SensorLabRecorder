@@ -16,6 +16,7 @@ import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -84,10 +85,10 @@ public class RehearsalAudioRecorder {
 	private CircularBufferFeatExtractionInference<AudioData> cirBuffer;
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
-	
+
 	// Used for uploading the information
 	private static StressSenseProbeWriter probeWriter;
-	
+
 	// Used for analytics
 	private String prevTime;
 
@@ -102,15 +103,20 @@ public class RehearsalAudioRecorder {
 		return state;
 	}
 
-	/*
-	 * 
-	 * Method used for recording.
-	 */
-	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
+	private class AudioReadingTask extends AsyncTask<Void, Void, Integer> {
+
 		@Override
-		public void onPeriodicNotification(AudioRecord recorder) {
-			int numRead = aRecorder.read(buffer, 0, buffer.length); // Fill
-			// buffer
+		protected Integer doInBackground(Void... arg0) {
+			return aRecorder.read(buffer, 0, buffer.length); // This causes
+																// application
+																// to be slow if
+																// it's on the
+																// main thread
+		}
+
+		@Override
+		protected void onPostExecute(Integer result) {
+			int numRead = result;
 			if (numRead != AudioRecord.ERROR_INVALID_OPERATION
 					&& numRead != AudioRecord.ERROR_BAD_VALUE) {
 				if (mWriteToFile) {
@@ -137,6 +143,18 @@ public class RehearsalAudioRecorder {
 			}
 		}
 
+	}
+
+	/*
+	 * 
+	 * Method used for recording.
+	 */
+	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
+		@Override
+		public void onPeriodicNotification(AudioRecord recorder) {
+			new AudioReadingTask().execute(); //previously contents of AudioReadingTask were here
+		}
+
 		@Override
 		public void onMarkerReached(AudioRecord recorder) {
 			// NOT USED
@@ -153,11 +171,12 @@ public class RehearsalAudioRecorder {
 	 * but the state is set to ERROR
 	 * 
 	 */
-	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter, int audioSource, int sampleRate,
-			int channelConfig, int audioFormat, boolean writeToFile) {
+	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter,
+			int audioSource, int sampleRate, int channelConfig,
+			int audioFormat, boolean writeToFile) {
 		mWriteToFile = writeToFile;
 		aChannelConfig = channelConfig;
-		
+
 		try {
 			if (audioFormat == AudioFormat.ENCODING_PCM_16BIT) {
 				bSamples = 16;
@@ -193,7 +212,7 @@ public class RehearsalAudioRecorder {
 			 * Check to make sure buffer size is not smaller than the smallest
 			 * allowed one
 			 */
-			
+
 			if (bufferSize < AudioRecord.getMinBufferSize(sampleRate,
 					channelConfig, audioFormat)) {
 				bufferSize = AudioRecord.getMinBufferSize(sampleRate,
@@ -215,9 +234,9 @@ public class RehearsalAudioRecorder {
 			state = State.INITIALIZING;
 			cirBuffer = new CircularBufferFeatExtractionInference<AudioData>(
 					null, 100);
-			
+
 			probeWriter = probewriter;
-					
+
 		} catch (Exception e) {
 			if (e.getMessage() != null) {
 				Log.e(TAG, e.getMessage());
@@ -300,7 +319,7 @@ public class RehearsalAudioRecorder {
 					}
 
 					// buffer = new short[bufferSize];
-					buffer = new short[framePeriod*bSamples/16*nChannels];
+					buffer = new short[framePeriod * bSamples / 16 * nChannels];
 					state = State.READY;
 				} else {
 					Log.e(TAG,
@@ -414,7 +433,7 @@ public class RehearsalAudioRecorder {
 		}
 		if (state == State.RECORDING) {
 			aRecorder.stop();
-			
+
 			if (mWriteToFile) {
 				try {
 					mDataOutput.flush();
@@ -434,7 +453,7 @@ public class RehearsalAudioRecorder {
 					state = State.ERROR;
 				}
 			}
-			
+
 			state = State.STOPPED;
 		} else {
 			Log.e(TAG, "stop() called on illegal state");
@@ -454,9 +473,8 @@ public class RehearsalAudioRecorder {
 
 	private AudioData audioFromQueueData;
 
-	
 	/**
-	 * PROCESSING DONE IN THIS THREAD 
+	 * PROCESSING DONE IN THIS THREAD
 	 */
 	private class AudioProcessing extends Thread {
 
@@ -531,7 +549,7 @@ public class RehearsalAudioRecorder {
 				voicedFrameNum = 0;
 				pitch.clear();
 				featureList.clear();
-				
+
 				// setActivityText(String.format("dataSize %d shorts %d",
 				// dataSize, data.length));
 
@@ -599,7 +617,7 @@ public class RehearsalAudioRecorder {
 							rate = features.getEnrate(rdata, framePeriod, 8000);
 
 						}
-						
+
 						features.getTeo(tdata_buffer[i], teager_index.length,
 								col, teagerFeature);
 						System.arraycopy(teagerFeature, 0, featureset, 0,
@@ -609,7 +627,7 @@ public class RehearsalAudioRecorder {
 						featureList.add(featureset.clone());
 					}
 				}
-				
+
 				double[] pitchFeature = new double[2];
 				features.var(pitch, pitchFeature);
 				time3 = System.currentTimeMillis();
@@ -646,7 +664,7 @@ public class RehearsalAudioRecorder {
 
 	/**
 	 * Notifies the handler of the analytic activity of the current status
-	 */	
+	 */
 	private void setActivityText(final String text) {
 
 		if (probeWriter != null) {
@@ -655,9 +673,9 @@ public class RehearsalAudioRecorder {
 			String nowAsString = df.format(new Date());
 			probe.withTimestamp(nowAsString);
 			probeWriter.write(probe, text);
-			
+
 		}
-		
+
 		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 				.getInstance().getTime());
 		if (prevTime == null || !prevTime.equals(curTime)) {
@@ -666,7 +684,7 @@ public class RehearsalAudioRecorder {
 				AudioRecorderService.changeHistory.removeLast();
 			prevTime = curTime;
 		}
-		
+
 		Handler handler = StressActivity.getHandler();
 		if (null != handler) {
 			Message m = new Message();

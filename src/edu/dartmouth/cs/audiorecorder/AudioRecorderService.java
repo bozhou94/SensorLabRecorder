@@ -147,6 +147,9 @@ public class AudioRecorderService extends Service {
 				
 				@Override
 				public void run() {
+					
+					boolean canRunNow = true;
+					
 					if (c.moveToFirst()) {
 						do {
 							int trigId = c.getInt(c
@@ -158,23 +161,19 @@ public class AudioRecorderService extends Service {
 							if (!conf.loadString(trigDesc)) {
 								continue;
 							}
+							
 							SimpleTime start = conf.getRangeStart();
 							SimpleTime end = conf.getRangeEnd();
 							SimpleTime now = new SimpleTime();
-							if (!start.isAfter(now) && !end.isBefore(now)) {
-								if (isRecording) {
-									stopRecording(true);
-									isRecording = false;
-								}
-								handler.postDelayed(Blackout, 45000);
-								return;
-							}
-
+							if (!start.isAfter(now) && !end.isBefore(now)) 
+								canRunNow = false;
+								
 						} while (c.moveToNext());
 					}
-					if (!isRecording) {
+					if (canRunNow && !isRecording) {
 						startRecoding(true);
-						isRecording = true;
+					} else if (!canRunNow && isRecording) {
+						stopRecording(true);
 					}
 					handler.postDelayed(Blackout, 45000);
 				}
@@ -260,6 +259,7 @@ public class AudioRecorderService extends Service {
 
 	private void stopRecording(boolean cancelTimer) {
 		if (mWavAudioRecorder.getState() == RehearsalAudioRecorder.State.RECORDING) {
+			isRecording = false;
 			Intent i = new Intent();
 			i.setAction(AUDIORECORDER_OFF);
 			sendBroadcast(i);
@@ -294,6 +294,7 @@ public class AudioRecorderService extends Service {
 			Intent i = new Intent();
 			i.setAction(AUDIORECORDER_ON);
 			sendBroadcast(i);
+			isRecording = true;
 			Log.i(TAG, "Recording started");
 		}
 	}
