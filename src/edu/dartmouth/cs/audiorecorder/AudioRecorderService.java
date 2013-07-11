@@ -206,13 +206,14 @@ public class AudioRecorderService extends Service {
 		handler.removeCallbacks(Blackout);
 		c.close();
 		db.close();
+		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// start the service on foreground to avoid it being killed too soon.
 		CharSequence text = getText(R.string.foreground_service_started);
-		Notification notification = new Notification(R.drawable.icon, text,
+		Notification notification = new Notification(R.drawable.icon_small, text,
 				System.currentTimeMillis());
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, SensorPreferenceActivity.class), 0);
@@ -263,7 +264,7 @@ public class AudioRecorderService extends Service {
 
 	private void stopRecording(boolean cancelTimer) {
 		CharSequence text = getText(R.string.audiorecording_service_stopped);
-		Notification notification = new Notification(R.drawable.mic_off, text,
+		Notification notification = new Notification(R.drawable.micoff_small, text,
 				System.currentTimeMillis());
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, SensorPreferenceActivity.class), 0);
@@ -288,7 +289,7 @@ public class AudioRecorderService extends Service {
 	private void startRecoding(boolean startTimer) {
 
 		CharSequence text = getText(R.string.audiorecording_service_started);
-		Notification notification = new Notification(R.drawable.mic_on, text,
+		Notification notification = new Notification(R.drawable.micon_small, text,
 				System.currentTimeMillis());
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, SensorPreferenceActivity.class), 0);

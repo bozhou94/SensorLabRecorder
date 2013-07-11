@@ -64,20 +64,23 @@ containing a value of this type.
         public static final int ic_menu_preferences=0x7f02000b;
         public static final int icon=0x7f02000c;
         public static final int icon_actions=0x7f02000d;
-        public static final int logo=0x7f02000e;
-        public static final int mic_off=0x7f02000f;
-        public static final int mic_on=0x7f020010;
-        public static final int minimic=0x7f020011;
-        public static final int mobility=0x7f020012;
-        public static final int old=0x7f020013;
-        public static final int pause=0x7f020014;
-        public static final int pending=0x7f020015;
-        public static final int play=0x7f020016;
-        public static final int prompt_response_item_bg=0x7f020017;
-        public static final int red_minus=0x7f020018;
-        public static final int survey_notification=0x7f020019;
-        public static final int upload=0x7f02001a;
-        public static final int wordlogo=0x7f02001b;
+        public static final int icon_small=0x7f02000e;
+        public static final int logo=0x7f02000f;
+        public static final int mic_off=0x7f020010;
+        public static final int mic_on=0x7f020011;
+        public static final int micoff_small=0x7f020012;
+        public static final int micon_small=0x7f020013;
+        public static final int minimic=0x7f020014;
+        public static final int mobility=0x7f020015;
+        public static final int old=0x7f020016;
+        public static final int pause=0x7f020017;
+        public static final int pending=0x7f020018;
+        public static final int play=0x7f020019;
+        public static final int prompt_response_item_bg=0x7f02001a;
+        public static final int red_minus=0x7f02001b;
+        public static final int survey_notification=0x7f02001c;
+        public static final int upload=0x7f02001d;
+        public static final int wordlogo=0x7f02001e;
     }
     public static final class id {
         public static final int LinearLayout01=0x7f080000;
