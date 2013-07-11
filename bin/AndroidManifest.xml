@@ -78,12 +78,7 @@
 
         <service android:name=".AudioRecorderService" />
         <service android:name="org.ohmage.mobility.blackout.BlackoutService" />
-
-        <receiver android:name="edu.dartmouth.cs.audiorecorder.BootReceiver" >
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
+ 
         <receiver android:name="org.ohmage.mobility.blackout.BlackoutService$AlarmReceiver" >
             <intent-filter>
                 <action android:name="org.ohmage.mobility.blackout.BlackoutAlarm" />
@@ -97,6 +92,11 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="edu.dartmouth.cs.audiorecorder.BootReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 

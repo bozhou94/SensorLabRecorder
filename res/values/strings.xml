@@ -2,7 +2,9 @@
 <resources>
     <string name="hello">Hello World, SensorlabRecorderActivity!</string>
     <string name="app_name">StressSense</string>
-    <string name="foreground_service_started">Audio recording in progress.</string>
+    <string name="foreground_service_started">Audio services have been initialized.</string>
+    <string name="audiorecording_service_started">Audio services have begun.</string>
+    <string name="audiorecording_service_stopped">Audio services have halted.</string>
     <string name="local_service_label">Sensorlab AudioRecorder</string>
     <string name="service_status">The audio recorder is currently: %s</string>
     <string name="blackout">Tap here to set blackout times</string>

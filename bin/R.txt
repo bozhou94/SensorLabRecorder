@@ -79,14 +79,16 @@ int layout trigger_notif_editor 0x7f030009
 int layout trigger_text_input 0x7f03000a
 int layout trigger_two_line_list_item 0x7f03000b
 int string app_name 0x7f050000
-int string blackout 0x7f050005
+int string audiorecording_service_started 0x7f050003
+int string audiorecording_service_stopped 0x7f050004
+int string blackout 0x7f050007
 int string foreground_service_started 0x7f050002
 int string hello 0x7f050001
-int string local_service_label 0x7f050003
-int string service_status 0x7f050004
-int string stresssense_market_btn_label 0x7f050007
-int string stresssense_market_link 0x7f050008
-int string stresssense_missing_desc 0x7f050006
+int string local_service_label 0x7f050005
+int string service_status 0x7f050006
+int string stresssense_market_btn_label 0x7f050009
+int string stresssense_market_link 0x7f05000a
+int string stresssense_missing_desc 0x7f050008
 int style AppTheme 0x7f060000
 int[] styleable probe { 0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003 }
 int styleable probe_observerId 0

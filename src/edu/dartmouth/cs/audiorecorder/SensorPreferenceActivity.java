@@ -120,13 +120,13 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		context.stopService(new Intent(context, AudioRecorderService.class));
 	}
 	public static void start(Context context) {
-		if (canRunNow(context, true))
-			startRunning(context);
+		canRunNow(context, true);
+		startRunning(context);
 	}
 
 	public static void stop(Context context) {
-		if (canRunNow(context, false))
-			stopRunning(context);
+		canRunNow(context, false);
+		stopRunning(context);
 	}
 
 	/**
