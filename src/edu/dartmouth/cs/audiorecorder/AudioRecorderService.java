@@ -14,6 +14,7 @@ import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -69,6 +70,7 @@ public class AudioRecorderService extends Service {
 
 	private static final String AUDIO_RECORDING_DIR = "rawaudio";
 	private static final int WAV_CHUNK_LENGTH_MS = 5 * 60 * 1000; // 5 minutes
+	private static final int BLACKOUT_NOTIFICATION_ID = 0;
 
 	private static final String TAG = "AudioRecorderService";
 
@@ -83,6 +85,7 @@ public class AudioRecorderService extends Service {
 	private IncomingCallDetector mIncomingCallDetector;
 	private OutgoingCallDetector mOutgoingCallDetector;
 	private StressSenseProbeWriter probeWriter;
+	private NotificationManager mNotifManager;
 
 	// Blackout functionality
 	private Handler handler = new Handler();
@@ -180,6 +183,7 @@ public class AudioRecorderService extends Service {
 			};
 
 			handler.post(Blackout);
+			mNotifManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 		} catch (Exception e) {
 			Log.e(TAG, e.getMessage());
@@ -258,6 +262,16 @@ public class AudioRecorderService extends Service {
 	}
 
 	private void stopRecording(boolean cancelTimer) {
+		CharSequence text = getText(R.string.audiorecording_service_stopped);
+		Notification notification = new Notification(R.drawable.mic_off, text,
+				System.currentTimeMillis());
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				new Intent(this, SensorPreferenceActivity.class), 0);
+		notification.setLatestEventInfo(this,
+				getText(R.string.audiorecording_service_stopped), text, contentIntent);
+		
+		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
+		
 		if (mWavAudioRecorder.getState() == RehearsalAudioRecorder.State.RECORDING) {
 			isRecording = false;
 			Intent i = new Intent();
@@ -273,6 +287,16 @@ public class AudioRecorderService extends Service {
 
 	private void startRecoding(boolean startTimer) {
 
+		CharSequence text = getText(R.string.audiorecording_service_started);
+		Notification notification = new Notification(R.drawable.mic_on, text,
+				System.currentTimeMillis());
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				new Intent(this, SensorPreferenceActivity.class), 0);
+		notification.setLatestEventInfo(this,
+				getText(R.string.audiorecording_service_started), text, contentIntent);
+		
+		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
+		
 		if (mWavAudioRecorder.getState() != RehearsalAudioRecorder.State.RECORDING) {
 			if (startTimer) {
 				mTimer = new Timer();
