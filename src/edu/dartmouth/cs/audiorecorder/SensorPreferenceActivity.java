@@ -7,6 +7,7 @@ import org.ohmage.mobility.blackout.base.TriggerInit;
 import org.ohmage.mobility.blackout.ui.TriggerListActivity;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -167,4 +168,5 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 			TriggerInit.initTriggers(context);
 		return runningNow;
 	}
+	
 }

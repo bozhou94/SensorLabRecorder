@@ -152,7 +152,8 @@ public class RehearsalAudioRecorder {
 	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			new AudioReadingTask().execute(); //previously contents of AudioReadingTask were here
+			new AudioReadingTask().execute(); // previously contents of
+												// AudioReadingTask were here
 		}
 
 		@Override
@@ -556,11 +557,12 @@ public class RehearsalAudioRecorder {
 				// sampling error
 
 				// detecting sound
-				if (features.rms(data) < 250) {
+				double f_rms = features.rms(data);
+				if (f_rms < 250) {
 					setActivityText("silence");
 					time1 = System.currentTimeMillis();
-					Log.d(TAG, "slience with rms:" + features.rms(data)
-							+ "time " + (time1 - time) / 1000);
+					Log.d(TAG, "slience with rms:" + f_rms + "time "
+							+ (time1 - time) / 1000);
 					continue;
 				}
 
@@ -669,9 +671,8 @@ public class RehearsalAudioRecorder {
 
 		if (probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
-			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
-			String nowAsString = df.format(new Date());
-			probe.withTimestamp(nowAsString);
+			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+					.format(new Date()));
 			probeWriter.write(probe, text);
 
 		}
