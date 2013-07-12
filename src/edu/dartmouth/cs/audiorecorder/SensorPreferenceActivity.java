@@ -8,16 +8,20 @@ import org.ohmage.mobility.blackout.ui.TriggerListActivity;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceClickListener;
+import android.util.Log;
 
 /**
  * This is the configuration portion of StressSense. 
@@ -110,14 +114,28 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		}
 	};
 
-	/*-------------------------------BLACKOUT FUNCTIONALITY-------------------------------*/
+	/*-------------------------------SERVICE FUNCTIONALITY-------------------------------*/
 
+	private static ServiceConnection mServerConn = new ServiceConnection() {
+	    @Override
+	    public void onServiceConnected(ComponentName name, IBinder binder) {
+	    }
+
+	    @Override
+	    public void onServiceDisconnected(ComponentName name) {
+	    }
+	};
+	
 	public static void startRunning (Context context) {
-		context.startService(new Intent(context, AudioRecorderService.class));
+		Intent i = new Intent(context, AudioRecorderService.class);
+		context.bindService(i, mServerConn, Context.BIND_IMPORTANT);
+		context.startService(i);
 	}
 	
 	public static void stopRunning (Context context) {
-		context.stopService(new Intent(context, AudioRecorderService.class));
+		Intent i = new Intent(context, AudioRecorderService.class);
+		context.stopService(i);
+		context.unbindService(mServerConn);
 	}
 	public static void start(Context context) {
 		canRunNow(context, true);
@@ -129,6 +147,8 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		stopRunning(context);
 	}
 
+	/*-------------------------------BLACKOUT FUNCTIONALITY-------------------------------*/
+	
 	/**
 	 * Determines whether or not the service can currently run based on blackout times
 	 * @param startCall if true, initializes triggers, otherwise stop triggers.
