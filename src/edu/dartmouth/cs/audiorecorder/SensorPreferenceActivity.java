@@ -116,6 +116,7 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 
 	/*-------------------------------SERVICE FUNCTIONALITY-------------------------------*/
 
+	/*
 	private static ServiceConnection mServerConn = new ServiceConnection() {
 	    @Override
 	    public void onServiceConnected(ComponentName name, IBinder binder) {
@@ -124,18 +125,18 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 	    @Override
 	    public void onServiceDisconnected(ComponentName name) {
 	    }
-	};
+	};*/
 	
 	public static void startRunning (Context context) {
 		Intent i = new Intent(context, AudioRecorderService.class);
-		context.bindService(i, mServerConn, Context.BIND_IMPORTANT);
+		//context.bindService(i, mServerConn, Context.BIND_IMPORTANT);
 		context.startService(i);
 	}
 	
 	public static void stopRunning (Context context) {
 		Intent i = new Intent(context, AudioRecorderService.class);
 		context.stopService(i);
-		context.unbindService(mServerConn);
+		//context.unbindService(mServerConn);
 	}
 	public static void start(Context context) {
 		canRunNow(context, true);
