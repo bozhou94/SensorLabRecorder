@@ -161,7 +161,7 @@ public class AudioRecorderService extends Service {
 							String trigDesc = db.getTriggerDescription(trigId);
 							BlackoutDesc conf = new BlackoutDesc();
 
-							if (!conf.loadString(trigDesc)) {
+							if (!conf.loadString(trigDesc) || !db.getActionDescription(trigId)) {
 								continue;
 							}
 							
