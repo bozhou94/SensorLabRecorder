@@ -49,13 +49,6 @@ public class StressActivity extends Activity {
 				android.R.layout.simple_list_item_1,
 				AudioRecorderService.changeHistory);
 		myListView.setAdapter(mAdapter);
-
-		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				SensorPreferenceActivity.IS_ON, false)) {
-			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
-					R.drawable.mic_on, 0, 0, 0);
-			mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
-		}
 	}
 
 	@Override
@@ -66,6 +59,12 @@ public class StressActivity extends Activity {
 		registerReceiver(mAudioRecorderStatusReceiver, new IntentFilter(
 				AudioRecorderService.AUDIORECORDER_OFF));
 		sMessageHandler = mHandler;
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				SensorPreferenceActivity.IS_ON, false)) {
+			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
+					R.drawable.mic_on, 0, 0, 0);
+			mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
+		}
 	}
 
 	@Override
@@ -73,6 +72,9 @@ public class StressActivity extends Activity {
 		super.onStop();
 		unregisterReceiver(mAudioRecorderStatusReceiver);
 		sMessageHandler = null;
+		mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
+				R.drawable.mic_off, 0, 0, 0);
+		mTvGenericText.setText("");
 	}
 
 	/*--------------------------------BROADCASTRECEIVERS--------------------------------*/

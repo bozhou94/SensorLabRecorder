@@ -731,17 +731,8 @@ public class RehearsalAudioRecorder {
 			if (AudioRecorderService.changeHistory.size() > 10)
 				AudioRecorderService.changeHistory.removeLast();
 			prevTime = curTime;
-			Handler handler = StressActivity.getHandler();
-			if (null != handler) {
-				Message m = new Message();
-				Bundle data = new Bundle();
-				data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-						text);
-				m.setData(data);
-				handler.sendMessage(m);
-			}
 		}
-
+		
 		// Displays all the mode changes to probing
 		if (prevStatus == null || !prevStatus.equals(text)) {
 			
@@ -753,7 +744,18 @@ public class RehearsalAudioRecorder {
 			}
 			
 			prevStatus = text;
-		} 
+		}
+		
+		// Updates analytic display of current mode
+		Handler handler = StressActivity.getHandler();
+		if (null != handler) {
+			Message m = new Message();
+			Bundle data = new Bundle();
+			data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
+					text);
+			m.setData(data);
+			handler.sendMessage(m);
+		}
 	}
 
 }
