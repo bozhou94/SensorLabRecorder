@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.ohmage.mobility.blackout.BlackoutDesc;
 import org.ohmage.mobility.blackout.base.TriggerDB;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
+import org.ohmage.probemanager.ProbeBuilder;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.app.Notification;
@@ -38,7 +39,7 @@ import android.util.Log;
 
 public class AudioRecorderService extends Service {
 
-	private final class ServiceHandler extends Handler {
+	private static final class ServiceHandler extends Handler {
 		public ServiceHandler(Looper looper) {
 			super(looper);
 		}
@@ -94,7 +95,7 @@ public class AudioRecorderService extends Service {
 	private Cursor c;
 	private boolean isRecording = false;
 	
-	// Audio Processing Log History (Used in Analytics/StressActivity)
+	// Audio Processing Log History (Used in Analytics/StressActivity), Diff here
 	public static LinkedList<String> changeHistory = new LinkedList<String>();
 	
 	@Override
@@ -142,6 +143,7 @@ public class AudioRecorderService extends Service {
 			 * the time coincides with a user-dictated Blackout time. It then
 			 * starts/stops recording accordingly.
 			 */
+			
 			db = new TriggerDB(this);
 			db.open();
 			c = db.getAllTriggers();
@@ -184,6 +186,7 @@ public class AudioRecorderService extends Service {
 
 			handler.post(Blackout);
 			mNotifManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+			startRecoding(true);
 
 		} catch (Exception e) {
 			Log.e(TAG, e.getMessage());
@@ -195,6 +198,7 @@ public class AudioRecorderService extends Service {
 
 	@Override
 	public void onDestroy() {
+		turnOffProbe();
 		unregisterReceiver(mIncomingCallDetector);
 		unregisterReceiver(mOutgoingCallDetector);
 		mWl.release();
@@ -202,11 +206,17 @@ public class AudioRecorderService extends Service {
 		mWavAudioRecorder.release();
 		AudioRecorderService.isServiceRunning.set(false);
 		mServiceLooper.quit();
-		probeWriter.close();
 		handler.removeCallbacks(Blackout);
 		c.close();
 		db.close();
 		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
+	}
+	
+	private void turnOffProbe() {
+		if (probeWriter != null) {
+			mWavAudioRecorder.setActivityText("Off");
+			probeWriter.close();
+		}
 	}
 
 	@Override
@@ -229,7 +239,7 @@ public class AudioRecorderService extends Service {
 		mServiceHandler.sendMessage(msg);
 
 		// If we get killed, after returning from here, restart
-		return START_REDELIVER_INTENT;
+		return START_STICKY; //originally START_REDELIVER_INTENT
 
 	}
 
@@ -275,13 +285,13 @@ public class AudioRecorderService extends Service {
 		
 		if (mWavAudioRecorder.getState() == RehearsalAudioRecorder.State.RECORDING) {
 			isRecording = false;
-			Intent i = new Intent();
-			i.setAction(AUDIORECORDER_OFF);
-			sendBroadcast(i);
 			mWavAudioRecorder.stop();
 			if (cancelTimer) {
 				mTimer.cancel();
 			}
+			Intent i = new Intent();
+			i.setAction(AUDIORECORDER_OFF);
+			sendBroadcast(i);
 			Log.i(TAG, "Recording stopped");
 		}
 	}

@@ -90,6 +90,7 @@ public class RehearsalAudioRecorder {
 	private static StressSenseProbeWriter probeWriter;
 
 	// Used for analytics
+	private String prevStatus;
 	private String prevTime;
 
 	/**
@@ -145,15 +146,62 @@ public class RehearsalAudioRecorder {
 
 	}
 
+	
+	private class AudioReadingThread extends Thread {
+		
+		AudioRecord record;
+		public AudioReadingThread(AudioRecord recorder) {
+			record = recorder;
+		}
+		
+		@Override
+		public void run() {
+			int numRead = record.read(buffer, 0, buffer.length); ;
+			if (numRead != AudioRecord.ERROR_INVALID_OPERATION
+					&& numRead != AudioRecord.ERROR_BAD_VALUE) {
+				if (mWriteToFile) {
+					try {
+						// Write buffer to file
+						for (int i = 0; i < numRead; ++i) {
+							mDataOutput.writeShort(Short
+									.reverseBytes(buffer[i]));
+						}
+						mDataOutput.flush();
+					} catch (IOException e) {
+						Log.e(TAG,
+								"Error occured in updateListener, recording is aborted");
+						stop();
+						return;
+					}
+				}
+				cirBuffer.insert(new AudioData(buffer, numRead));
+				payloadSize += numRead;
+			} else {
+				Log.e(TAG,
+						"Error occured in updateListener, recording is aborted");
+				stop();
+			}
+		}
+	}
 	/*
 	 * 
 	 * Method used for recording.
 	 */
 	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
+		
+		int pos = 0;
+		AudioReadingThread tasks[] = new AudioReadingThread[5];
+		
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			new AudioReadingTask().execute(); // previously contents of
+			//new AudioReadingTask().execute(); // previously contents of
 												// AudioReadingTask were here
+			
+			if (tasks[pos] == null || tasks[pos].getState() != Thread.State.RUNNABLE) {
+				tasks[pos] = new AudioReadingThread(recorder);
+				tasks[pos].start();
+				}
+			pos = (pos > 3) ? 0 : (pos + 1);
 		}
 
 		@Override
@@ -161,6 +209,12 @@ public class RehearsalAudioRecorder {
 			// NOT USED
 		}
 	};
+
+	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter,
+			int audioSource, int sampleRate, int channelConfig, int audioFormat) {
+		this(probewriter, audioSource, sampleRate, channelConfig, audioFormat,
+				false);
+	}
 
 	/**
 	 * 
@@ -479,7 +533,7 @@ public class RehearsalAudioRecorder {
 	 */
 	private class AudioProcessing extends Thread {
 
-		CircularBufferFeatExtractionInference<AudioData> obj;
+		private CircularBufferFeatExtractionInference<AudioData> obj;
 		private AudioFeatureExtraction features;
 		private double[] audioFrameFeature;
 
@@ -667,16 +721,9 @@ public class RehearsalAudioRecorder {
 	/**
 	 * Notifies the handler of the analytic activity of the current status
 	 */
-	private void setActivityText(final String text) {
+	public synchronized void setActivityText(final String text) {
 
-		if (probeWriter != null) {
-			ProbeBuilder probe = new ProbeBuilder();
-			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
-					.format(new Date()));
-			probeWriter.write(probe, text);
-
-		}
-
+		// Displays the last 10 minutes to the user
 		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 				.getInstance().getTime());
 		if (prevTime == null || !prevTime.equals(curTime)) {
@@ -684,17 +731,29 @@ public class RehearsalAudioRecorder {
 			if (AudioRecorderService.changeHistory.size() > 10)
 				AudioRecorderService.changeHistory.removeLast();
 			prevTime = curTime;
+			Handler handler = StressActivity.getHandler();
+			if (null != handler) {
+				Message m = new Message();
+				Bundle data = new Bundle();
+				data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
+						text);
+				m.setData(data);
+				handler.sendMessage(m);
+			}
 		}
 
-		Handler handler = StressActivity.getHandler();
-		if (null != handler) {
-			Message m = new Message();
-			Bundle data = new Bundle();
-			data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-					text);
-			m.setData(data);
-			handler.sendMessage(m);
-		}
+		// Displays all the mode changes to probing
+		if (prevStatus == null || !prevStatus.equals(text)) {
+			
+			if (probeWriter != null) {
+				ProbeBuilder probe = new ProbeBuilder();
+				probe.withTimestamp(new SimpleDateFormat(
+						"yyyy-MM-dd'T'HH:mm'Z'").format(new Date()));
+				probeWriter.write(probe, text);
+			}
+			
+			prevStatus = text;
+		} 
 	}
 
 }

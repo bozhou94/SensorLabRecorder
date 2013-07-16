@@ -31,7 +31,6 @@ public class StressActivity extends Activity {
 
 	// Used for status writing
 	private static Handler sMessageHandler;
-	private String message;
 
 	// BroadcastReceiver for getting On/Off signals from the service
 	private AudioRecorderStatusRecevier mAudioRecorderStatusReceiver;
@@ -52,9 +51,11 @@ public class StressActivity extends Activity {
 		myListView.setAdapter(mAdapter);
 
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				SensorPreferenceActivity.IS_ON, false))
+				SensorPreferenceActivity.IS_ON, false)) {
 			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 					R.drawable.mic_on, 0, 0, 0);
+			mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
+		}
 	}
 
 	@Override
@@ -104,17 +105,13 @@ public class StressActivity extends Activity {
 	 * If nothing was added to the list in the previous minute, then the current
 	 * status is added, with the list storing a maximum of 10 statuses
 	 */
+	
 	Handler mHandler = new Handler() {
 
 		@Override
 		public void handleMessage(Message msg) {
-			String text = msg.getData().getString(
-					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT);
-
-			if (!text.equals(message)) {
-				message = text;
-				mTvGenericText.setText(": " + message);
-			}
+			mTvGenericText.setText(": " + msg.getData().getString(
+					AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT));
 
 			mAdapter.notifyDataSetChanged();
 		}
