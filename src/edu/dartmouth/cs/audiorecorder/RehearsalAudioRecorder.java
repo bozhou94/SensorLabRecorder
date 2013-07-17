@@ -1,15 +1,7 @@
 package edu.dartmouth.cs.audiorecorder;
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.io.*;
 
 import org.ohmage.probemanager.ProbeBuilder;
 import org.ohmage.probemanager.StressSenseProbeWriter;
@@ -42,14 +34,9 @@ public class RehearsalAudioRecorder {
 	// Recorder used for uncompressed recording
 	private AudioRecord aRecorder = null;
 
-	// Output file path
-	private String fPath = null;
-
 	// Recorder state; see State
 	private State state;
 
-	// File writer
-	private DataOutputStream mDataOutput;
 
 	// Number of channels, sample rate, sample size(size in bits), buffer size,
 	// audio source, sample size(see AudioFormat)
@@ -60,8 +47,6 @@ public class RehearsalAudioRecorder {
 	private int aSource;
 	private int aFormat;
 	private int aChannelConfig;
-
-	private boolean mWriteToFile;
 
 	private int frameSize;
 	private int windowSize;
@@ -77,11 +62,6 @@ public class RehearsalAudioRecorder {
 	// Buffer for output(only in uncompressed mode)
 	private short[] buffer;
 
-	// Number of bytes written to file after header(only in uncompressed mode)
-	// after stop() is called, this size is written to the header/data chunk in
-	// the wave file
-	private int payloadSize;
-
 	private CircularBufferFeatExtractionInference<AudioData> cirBuffer;
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
@@ -90,8 +70,8 @@ public class RehearsalAudioRecorder {
 	private static StressSenseProbeWriter probeWriter;
 
 	// Used for analytics
-	private String prevStatus;
 	private String prevTime;
+	private String prevStatus;
 
 	/**
 	 * 
@@ -119,25 +99,9 @@ public class RehearsalAudioRecorder {
 		protected void onPostExecute(Integer result) {
 			int numRead = result;
 			if (numRead != AudioRecord.ERROR_INVALID_OPERATION
-					&& numRead != AudioRecord.ERROR_BAD_VALUE) {
-				if (mWriteToFile) {
-					try {
-						// Write buffer to file
-						for (int i = 0; i < numRead; ++i) {
-							mDataOutput.writeShort(Short
-									.reverseBytes(buffer[i]));
-						}
-						mDataOutput.flush();
-					} catch (IOException e) {
-						Log.e(TAG,
-								"Error occured in updateListener, recording is aborted");
-						stop();
-						return;
-					}
-				}
+					&& numRead != AudioRecord.ERROR_BAD_VALUE)
 				cirBuffer.insert(new AudioData(buffer, numRead));
-				payloadSize += numRead;
-			} else {
+			else {
 				Log.e(TAG,
 						"Error occured in updateListener, recording is aborted");
 				stop();
@@ -146,62 +110,15 @@ public class RehearsalAudioRecorder {
 
 	}
 
-	
-	private class AudioReadingThread extends Thread {
-		
-		AudioRecord record;
-		public AudioReadingThread(AudioRecord recorder) {
-			record = recorder;
-		}
-		
-		@Override
-		public void run() {
-			int numRead = record.read(buffer, 0, buffer.length); ;
-			if (numRead != AudioRecord.ERROR_INVALID_OPERATION
-					&& numRead != AudioRecord.ERROR_BAD_VALUE) {
-				if (mWriteToFile) {
-					try {
-						// Write buffer to file
-						for (int i = 0; i < numRead; ++i) {
-							mDataOutput.writeShort(Short
-									.reverseBytes(buffer[i]));
-						}
-						mDataOutput.flush();
-					} catch (IOException e) {
-						Log.e(TAG,
-								"Error occured in updateListener, recording is aborted");
-						stop();
-						return;
-					}
-				}
-				cirBuffer.insert(new AudioData(buffer, numRead));
-				payloadSize += numRead;
-			} else {
-				Log.e(TAG,
-						"Error occured in updateListener, recording is aborted");
-				stop();
-			}
-		}
-	}
 	/*
 	 * 
 	 * Method used for recording.
 	 */
 	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
-		
-		int pos = 0;
-		AudioReadingThread tasks[] = new AudioReadingThread[5];
-		
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			//new AudioReadingTask().execute(); // previously contents of
+			new AudioReadingTask().execute(); // previously contents of
 												// AudioReadingTask were here
-			
-			if (tasks[pos] == null || tasks[pos].getState() != Thread.State.RUNNABLE) {
-				tasks[pos] = new AudioReadingThread(recorder);
-				tasks[pos].start();
-				}
-			pos = (pos > 3) ? 0 : (pos + 1);
 		}
 
 		@Override
@@ -209,12 +126,6 @@ public class RehearsalAudioRecorder {
 			// NOT USED
 		}
 	};
-
-	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter,
-			int audioSource, int sampleRate, int channelConfig, int audioFormat) {
-		this(probewriter, audioSource, sampleRate, channelConfig, audioFormat,
-				false);
-	}
 
 	/**
 	 * 
@@ -229,7 +140,6 @@ public class RehearsalAudioRecorder {
 	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter,
 			int audioSource, int sampleRate, int channelConfig,
 			int audioFormat, boolean writeToFile) {
-		mWriteToFile = writeToFile;
 		aChannelConfig = channelConfig;
 
 		try {
@@ -285,7 +195,6 @@ public class RehearsalAudioRecorder {
 				throw new Exception("AudioRecord initialization failed");
 			aRecorder.setRecordPositionUpdateListener(updateListener);
 			aRecorder.setPositionNotificationPeriod(framePeriod);
-			fPath = null;
 			state = State.INITIALIZING;
 			cirBuffer = new CircularBufferFeatExtractionInference<AudioData>(
 					null, 100);
@@ -297,28 +206,6 @@ public class RehearsalAudioRecorder {
 				Log.e(TAG, e.getMessage());
 			} else {
 				Log.e(TAG, "Unknown error occured while initializing recording");
-			}
-			state = State.ERROR;
-		}
-	}
-
-	/**
-	 * Sets output file path, call directly after construction/reset.
-	 * 
-	 * @param output
-	 *            file path
-	 * 
-	 */
-	public void setOutputFile(String argPath) {
-		try {
-			if (state == State.INITIALIZING) {
-				fPath = argPath;
-			}
-		} catch (Exception e) {
-			if (e.getMessage() != null) {
-				Log.e(TAG, e.getMessage());
-			} else {
-				Log.e(TAG, "Unknown error occured while setting output path");
 			}
 			state = State.ERROR;
 		}
@@ -337,42 +224,6 @@ public class RehearsalAudioRecorder {
 		try {
 			if (state == State.INITIALIZING) {
 				if ((aRecorder.getState() == AudioRecord.STATE_INITIALIZED)) {
-					// write file header
-					if (mWriteToFile && fPath != null) {
-						mDataOutput = new DataOutputStream(
-								new BufferedOutputStream(new FileOutputStream(
-										fPath)));
-						// Set file length to 0, to prevent unexpected behavior
-						// in case the file already existed
-						mDataOutput.writeBytes("RIFF");
-						mDataOutput.writeInt(0); // Final file size not known
-						// yet,
-						// write 0
-						mDataOutput.writeBytes("WAVE");
-						mDataOutput.writeBytes("fmt ");
-						/* Sub-chunk size, 16 for PCM */
-						mDataOutput.writeInt(Integer.reverseBytes(16));
-						/* AudioFormat, 1 for PCM */
-						mDataOutput.writeShort(Short.reverseBytes((short) 1));
-						/* Number of channels, 1 formono, 2 for stereo */
-						mDataOutput.writeShort(Short.reverseBytes(nChannels));
-						// Sample rate
-						mDataOutput.writeInt(Integer.reverseBytes(sRate));
-						// Byte rate
-						mDataOutput.writeInt(Integer.reverseBytes(sRate
-								* bSamples * nChannels / 8));
-						// Block align
-						mDataOutput
-								.writeShort(Short
-										.reverseBytes((short) (nChannels
-												* bSamples / 8)));
-						// Bits per sample
-						mDataOutput.writeShort(Short.reverseBytes(bSamples));
-						mDataOutput.writeBytes("data");
-						// Data chunk size not known yet, write 0
-						mDataOutput.writeInt(0);
-					}
-
 					// buffer = new short[bufferSize];
 					buffer = new short[framePeriod * bSamples / 16 * nChannels];
 					state = State.READY;
@@ -404,27 +255,11 @@ public class RehearsalAudioRecorder {
 	 * 
 	 */
 	public void release() {
-		if (state == State.RECORDING) {
+		if (state == State.RECORDING)
 			stop();
-		} else {
-			if (state == State.READY) {
-				try {
-					if (mWriteToFile) {
-						mDataOutput.close(); // Remove prepared file
-					}
-				} catch (IOException e) {
-					Log.e(TAG,
-							"I/O exception occured while closing output file");
-				}
-				if (mWriteToFile) {
-					(new File(fPath)).delete();
-				}
-			}
-		}
 
-		if (aRecorder != null) {
+		if (aRecorder != null)
 			aRecorder.release();
-		}
 	}
 
 	/**
@@ -439,7 +274,6 @@ public class RehearsalAudioRecorder {
 		try {
 			if (state != State.ERROR) {
 				release();
-				fPath = null; // Reset file path
 				aRecorder = new AudioRecord(aSource, sRate, aChannelConfig,
 						aFormat, bufferSize);
 				aRecorder.setRecordPositionUpdateListener(updateListener);
@@ -461,11 +295,10 @@ public class RehearsalAudioRecorder {
 	 */
 	public void start() {
 		if (state == State.READY) {
-			mAudioProcessingThread1 = new AudioProcessing(cirBuffer);
+			mAudioProcessingThread1 = new AudioProcessing();
 			mAudioProcessingThread1.start();
-			mAudioProcessingThread2 = new AudioProcessing(cirBuffer);
+			mAudioProcessingThread2 = new AudioProcessing();
 			mAudioProcessingThread2.start();
-			payloadSize = 0;
 			aRecorder.startRecording();
 			aRecorder.read(buffer, 0, buffer.length);
 			state = State.RECORDING;
@@ -488,27 +321,6 @@ public class RehearsalAudioRecorder {
 		}
 		if (state == State.RECORDING) {
 			aRecorder.stop();
-
-			if (mWriteToFile) {
-				try {
-					mDataOutput.flush();
-					mDataOutput.close();
-					int sizeToWrite = payloadSize * 2;
-					RandomAccessFile fWriter = new RandomAccessFile(fPath, "rw");
-					fWriter.seek(4); // Write size to RIFF header
-					fWriter.writeInt(Integer.reverseBytes(36 + sizeToWrite));
-
-					fWriter.seek(40); // Write size to Subchunk2Size field
-					fWriter.writeInt(Integer.reverseBytes(sizeToWrite));
-
-					fWriter.close();
-				} catch (IOException e) {
-					Log.e(TAG,
-							"I/O exception occured while closing output file");
-					state = State.ERROR;
-				}
-			}
-
 			state = State.STOPPED;
 		} else {
 			Log.e(TAG, "stop() called on illegal state");
@@ -526,79 +338,78 @@ public class RehearsalAudioRecorder {
 		}
 	}
 
-	private AudioData audioFromQueueData;
+	
 
 	/**
 	 * PROCESSING DONE IN THIS THREAD
 	 */
 	private class AudioProcessing extends Thread {
 
-		private CircularBufferFeatExtractionInference<AudioData> obj;
+		private final int row, col;
+		
+		private final int nmfcc = 20;
+		private int lefr;
+		private int voicedFrameNum = 0;
+		private double zcr_m, zcr_v, rms_m, rms_s, rms_threshold;
+		private double rate = -1;
+		private short[] data;
+		private float[] rdata;
+		private double[] fdata;
+		private double[][] tdata;
+		private short[][] data_buffer;
+		private double[][] fdata_buffer;
+		private double[] rms;
+		private double[] zcr;
+		private ArrayList<Double> pitch;
+		private double[] featureset;
+		private double[][] tdata_buffer;
+		private double[] teagerFeature;
+		private int[] teager_index = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+				12, 13, 14, 15, 16, 17 };;
+		private ArrayList<double[]> featureList;
 		private AudioFeatureExtraction features;
 		private double[] audioFrameFeature;
+		private AudioData audioFromQueueData;
 
-		public AudioProcessing(
-				CircularBufferFeatExtractionInference<AudioData> obj) {
-			this.obj = obj;
+		public AudioProcessing() {
 			features = new AudioFeatureExtraction(frameSize, windowSize, 24,
 					20, 8000);
 			audioFrameFeature = new double[features.getFrame_feature_size()];
+			
+			data = new short[framePeriod];
+			rdata = new float[framePeriod];
+			fdata = new double[framePeriod];
+			row = features.getWindow_length();
+			col = features.getFrame_length();
+			data_buffer = new short[row][col];
+			fdata_buffer = new double[row][col];
+			rms = new double[row];
+			zcr = new double[row];
+			// int[] teager_index = new int[]{2,6,7,8,9,10,11,17};
+			tdata = new double[teager_index.length][framePeriod];
+			tdata_buffer = new double[row][teager_index.length * col];
+			teagerFeature = new double[teager_index.length];
+			featureset = new double[teager_index.length + nmfcc - 1
+					+ 5];
+			// features for voice detection
+			pitch = new ArrayList<Double>();
+			featureList = new ArrayList<double[]>();
+			// features = new AudioFeatureExtraction(col, row, 20, 8000);
 		}
 
 		@Override
 		public void run() {
-			short[] data = new short[framePeriod];
-			float[] rdata = new float[framePeriod];
-			double[] fdata = new double[framePeriod];
-			final int row = features.getWindow_length();
-			final int col = features.getFrame_length();
-			short[][] data_buffer = new short[row][col];
-			double[][] fdata_buffer = new double[row][col];
-			double[] rms = new double[row];
-			double[] zcr = new double[row];
-			int[] teager_index = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-					12, 13, 14, 15, 16, 17 };//
-			// int[] teager_index = new int[]{2,6,7,8,9,10,11,17};
-			final int nmfcc = 20;
-			double[][] tdata = new double[teager_index.length][framePeriod];
-			double[][] tdata_buffer = new double[row][teager_index.length * col];
-			double[] teagerFeature = new double[teager_index.length];
-			double[] featureset = new double[teager_index.length + nmfcc - 1
-					+ 5];
-			// features for voice detection
-			double zcr_m, zcr_v, rms_m, rms_s, rms_threshold;
-			ArrayList<Double> pitch = new ArrayList<Double>();
-			ArrayList<double[]> featureList = new ArrayList<double[]>();
-			int lefr;
-			double rate = -1;
-			int voicedFrameNum = 0;
-			// features = new AudioFeatureExtraction(col, row, 20, 8000);
-			// test only
-			short[] test = new short[framePeriod];
-
-			try {
-				BufferedReader f = new BufferedReader(new FileReader(new File(
-						"/sdcard/test")));
-				String[] d = f.readLine().split(",");
-				for (int i = 0; i < framePeriod; i++) {
-					test[i] = Short.parseShort(d[i]);
-					// if(i<5) Log.d(TAG, String.format("data:%d",test[i]));
-				}
-				f.close();
-			} catch (IOException e) {
-				Log.d(TAG, "error" + e.getMessage());
-			}
-
 			while (true) {
 				double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
-				audioFromQueueData = obj.deleteAndHandleData();
+				audioFromQueueData = cirBuffer.deleteAndHandleData();
 				time = System.currentTimeMillis();
 				/* data to process is in data */
 				data = audioFromQueueData.mData;
 				/* data length is in dataSize */
 				int dataSize = audioFromQueueData.mSize;
 				if (dataSize < framePeriod)
-					continue;
+					//continue; 
+					return;
 				// System.arraycopy(audiodata.mData, 0, data, 0,
 				// framePeriod);
 				voicedFrameNum = 0;
@@ -617,7 +428,8 @@ public class RehearsalAudioRecorder {
 					time1 = System.currentTimeMillis();
 					Log.d(TAG, "slience with rms:" + f_rms + "time "
 							+ (time1 - time) / 1000);
-					continue;
+					//continue;
+					return;
 				}
 
 				// detecting voice
@@ -721,7 +533,7 @@ public class RehearsalAudioRecorder {
 	/**
 	 * Notifies the handler of the analytic activity of the current status
 	 */
-	public synchronized void setActivityText(final String text) {
+	private synchronized void setActivityText(final String text) {
 
 		// Displays the last 10 minutes to the user
 		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
@@ -731,22 +543,24 @@ public class RehearsalAudioRecorder {
 			if (AudioRecorderService.changeHistory.size() > 10)
 				AudioRecorderService.changeHistory.removeLast();
 			prevTime = curTime;
+			updateAnalytic(text);
 		}
 		
 		// Displays all the mode changes to probing
 		if (prevStatus == null || !prevStatus.equals(text)) {
-			
+
 			if (probeWriter != null) {
 				ProbeBuilder probe = new ProbeBuilder();
 				probe.withTimestamp(new SimpleDateFormat(
 						"yyyy-MM-dd'T'HH:mm'Z'").format(new Date()));
 				probeWriter.write(probe, text);
 			}
-			
 			prevStatus = text;
+			updateAnalytic(text);
 		}
-		
-		// Updates analytic display of current mode
+	}
+	
+	private void updateAnalytic(final String text) {
 		Handler handler = StressActivity.getHandler();
 		if (null != handler) {
 			Message m = new Message();
@@ -757,5 +571,4 @@ public class RehearsalAudioRecorder {
 			handler.sendMessage(m);
 		}
 	}
-
 }

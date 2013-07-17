@@ -65,6 +65,7 @@ public class StressActivity extends Activity {
 					R.drawable.mic_on, 0, 0, 0);
 			mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
 		}
+		mAdapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -88,13 +89,17 @@ public class StressActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction()
-					.equals(AudioRecorderService.AUDIORECORDER_ON))
+					.equals(AudioRecorderService.AUDIORECORDER_ON)) {
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_on, 0, 0, 0);
+				mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
+			}
 			else if (intent.getAction().equals(
-					AudioRecorderService.AUDIORECORDER_OFF))
+					AudioRecorderService.AUDIORECORDER_OFF)) {
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_off, 0, 0, 0);
+				mTvGenericText.setText("");
+			}
 		}
 	}
 
@@ -107,7 +112,7 @@ public class StressActivity extends Activity {
 	 * If nothing was added to the list in the previous minute, then the current
 	 * status is added, with the list storing a maximum of 10 statuses
 	 */
-	
+
 	Handler mHandler = new Handler() {
 
 		@Override
