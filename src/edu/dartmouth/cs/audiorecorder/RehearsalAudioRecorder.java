@@ -37,7 +37,6 @@ public class RehearsalAudioRecorder {
 	// Recorder state; see State
 	private State state;
 
-
 	// Number of channels, sample rate, sample size(size in bits), buffer size,
 	// audio source, sample size(see AudioFormat)
 	private short nChannels;
@@ -99,9 +98,9 @@ public class RehearsalAudioRecorder {
 		protected void onPostExecute(Integer result) {
 			int numRead = result;
 			if (numRead != AudioRecord.ERROR_INVALID_OPERATION
-					&& numRead != AudioRecord.ERROR_BAD_VALUE)
+					&& numRead != AudioRecord.ERROR_BAD_VALUE) {
 				cirBuffer.insert(new AudioData(buffer, numRead));
-			else {
+			} else {
 				Log.e(TAG,
 						"Error occured in updateListener, recording is aborted");
 				stop();
@@ -338,15 +337,13 @@ public class RehearsalAudioRecorder {
 		}
 	}
 
-	
-
 	/**
 	 * PROCESSING DONE IN THIS THREAD
 	 */
 	private class AudioProcessing extends Thread {
 
 		private final int row, col;
-		
+
 		private final int nmfcc = 20;
 		private int lefr;
 		private int voicedFrameNum = 0;
@@ -364,8 +361,8 @@ public class RehearsalAudioRecorder {
 		private double[] featureset;
 		private double[][] tdata_buffer;
 		private double[] teagerFeature;
-		private int[] teager_index = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-				12, 13, 14, 15, 16, 17 };;
+		private int[] teager_index = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+				11, 12, 13, 14, 15, 16, 17 };;
 		private ArrayList<double[]> featureList;
 		private AudioFeatureExtraction features;
 		private double[] audioFrameFeature;
@@ -375,7 +372,7 @@ public class RehearsalAudioRecorder {
 			features = new AudioFeatureExtraction(frameSize, windowSize, 24,
 					20, 8000);
 			audioFrameFeature = new double[features.getFrame_feature_size()];
-			
+
 			data = new short[framePeriod];
 			rdata = new float[framePeriod];
 			fdata = new double[framePeriod];
@@ -389,8 +386,7 @@ public class RehearsalAudioRecorder {
 			tdata = new double[teager_index.length][framePeriod];
 			tdata_buffer = new double[row][teager_index.length * col];
 			teagerFeature = new double[teager_index.length];
-			featureset = new double[teager_index.length + nmfcc - 1
-					+ 5];
+			featureset = new double[teager_index.length + nmfcc - 1 + 5];
 			// features for voice detection
 			pitch = new ArrayList<Double>();
 			featureList = new ArrayList<double[]>();
@@ -408,8 +404,7 @@ public class RehearsalAudioRecorder {
 				/* data length is in dataSize */
 				int dataSize = audioFromQueueData.mSize;
 				if (dataSize < framePeriod)
-					//continue; 
-					return;
+					continue;
 				// System.arraycopy(audiodata.mData, 0, data, 0,
 				// framePeriod);
 				voicedFrameNum = 0;
@@ -428,8 +423,7 @@ public class RehearsalAudioRecorder {
 					time1 = System.currentTimeMillis();
 					Log.d(TAG, "slience with rms:" + f_rms + "time "
 							+ (time1 - time) / 1000);
-					//continue;
-					return;
+					continue;
 				}
 
 				// detecting voice
@@ -533,7 +527,7 @@ public class RehearsalAudioRecorder {
 	/**
 	 * Notifies the handler of the analytic activity of the current status
 	 */
-	private synchronized void setActivityText(final String text) {
+	public synchronized void setActivityText(final String text) {
 
 		// Displays the last 10 minutes to the user
 		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
@@ -545,7 +539,7 @@ public class RehearsalAudioRecorder {
 			prevTime = curTime;
 			updateAnalytic(text);
 		}
-		
+
 		// Displays all the mode changes to probing
 		if (prevStatus == null || !prevStatus.equals(text)) {
 
@@ -559,7 +553,7 @@ public class RehearsalAudioRecorder {
 			updateAnalytic(text);
 		}
 	}
-	
+
 	private void updateAnalytic(final String text) {
 		Handler handler = StressActivity.getHandler();
 		if (null != handler) {

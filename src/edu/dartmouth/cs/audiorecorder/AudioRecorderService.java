@@ -162,9 +162,11 @@ public class AudioRecorderService extends Service {
 		mWl.release();
 		if (isRecording)
 			stopRecording(true);
+		if (probeWriter != null) 
+			mWavAudioRecorder.setActivityText("Off");
+		probeWriter.close();
 		mWavAudioRecorder.release();
-		//probeWriter.close();
-		//handler.removeCallbacks(Blackout);
+		handler.removeCallbacks(Blackout);
 		c.close();
 		db.close();
 		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
@@ -183,39 +185,10 @@ public class AudioRecorderService extends Service {
 		startForeground(R.string.foreground_service_started, notification);
 
 		// If we get killed, after returning from here, restart
-		return START_REDELIVER_INTENT;
+		return START_STICKY;
 
 	}
-/*
-	private void rollToNewAudioFile() {
-		stopRecording(false);
-		startRecoding(false);
-	}
-
-	private String getFileOnSD() {
-		TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		String imei = telephonyManager.getDeviceId();
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-		String filename = String.format("%s_%s.wav", imei,
-				sdf.format(new Date()));
-
-		File root = new File(Environment.getExternalStorageDirectory(),
-				AUDIO_RECORDING_DIR);
-		if (!root.exists()) {
-			root.mkdir();
-		}
-		File f = new File(root, filename);
-		return f.getAbsolutePath();
-	}
-
-	class RollWaveFile extends TimerTask {
-
-		@Override
-		public void run() {
-			rollToNewAudioFile();
-		}
-	}
-*/
+	
 	private void stopRecording(boolean cancelTimer) {
 		CharSequence text = getText(R.string.audiorecording_service_stopped);
 		Notification notification = new Notification(R.drawable.micoff_small, text,
@@ -233,10 +206,6 @@ public class AudioRecorderService extends Service {
 			i.setAction(AUDIORECORDER_OFF);
 			sendBroadcast(i);
 			mWavAudioRecorder.stop();
-			/*
-			if (cancelTimer) {
-				mTimer.cancel();
-			}*/
 			Log.i(TAG, "Recording stopped");
 		}
 	}
@@ -254,19 +223,8 @@ public class AudioRecorderService extends Service {
 		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
 
 		if (mWavAudioRecorder.getState() != RehearsalAudioRecorder.State.RECORDING) {
-			/*
-			if (startTimer) {
-				mTimer = new Timer();
-				mTimer.schedule(new RollWaveFile(), WAV_CHUNK_LENGTH_MS,
-						WAV_CHUNK_LENGTH_MS);
-			}
-
-			String targetFile = getFileOnSD();
-			Log.d(TAG, "Recording audio to " + targetFile);
-*/
+			
 			mWavAudioRecorder.reset();
-
-			//mWavAudioRecorder.setOutputFile(targetFile);
 
 			mWavAudioRecorder.prepare();
 
