@@ -345,9 +345,9 @@ public class RehearsalAudioRecorder {
 		private final int row, col;
 
 		private final int nmfcc = 20;
-		private int lefr;
+		// private int lefr;
 		private int voicedFrameNum = 0;
-		private double zcr_m, zcr_v, rms_m, rms_s, rms_threshold;
+		//private double zcr_m, zcr_v, rms_m, rms_s, rms_threshold;
 		private double rate = -1;
 		private short[] data;
 		private float[] rdata;
@@ -355,7 +355,7 @@ public class RehearsalAudioRecorder {
 		private double[][] tdata;
 		private short[][] data_buffer;
 		private double[][] fdata_buffer;
-		private double[] rms;
+		// private double[] rms;
 		private double[] zcr;
 		private ArrayList<Double> pitch;
 		private double[] featureset;
@@ -380,7 +380,7 @@ public class RehearsalAudioRecorder {
 			col = features.getFrame_length();
 			data_buffer = new short[row][col];
 			fdata_buffer = new double[row][col];
-			rms = new double[row];
+			// rms = new double[row];
 			zcr = new double[row];
 			// int[] teager_index = new int[]{2,6,7,8,9,10,11,17};
 			tdata = new double[teager_index.length][framePeriod];
@@ -396,61 +396,69 @@ public class RehearsalAudioRecorder {
 		@Override
 		public void run() {
 			while (true) {
-				double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
+				//double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
+				
 				audioFromQueueData = cirBuffer.deleteAndHandleData();
-				time = System.currentTimeMillis();
+				
+				/* data length is in dataSize */
+				// int dataSize = audioFromQueueData.mSize;
+				if (audioFromQueueData.mSize < framePeriod)
+					continue;
+				
+				//time = System.currentTimeMillis();
 				/* data to process is in data */
 				data = audioFromQueueData.mData;
-				/* data length is in dataSize */
-				int dataSize = audioFromQueueData.mSize;
-				if (dataSize < framePeriod)
+				
+				// sampling error
+
+				// detecting sound
+				//double f_rms = features.rms(data);
+				if (features.rms(data) < 250) {
+					setActivityText("silence");
+					//time1 = System.currentTimeMillis();
+					//Log.d(TAG, "slience with rms:" + f_rms + "time "
+						//	+ (time1 - time) / 1000);
 					continue;
+				}
+
 				// System.arraycopy(audiodata.mData, 0, data, 0,
 				// framePeriod);
+				
 				voicedFrameNum = 0;
 				pitch.clear();
 				featureList.clear();
 
 				// setActivityText(String.format("dataSize %d shorts %d",
 				// dataSize, data.length));
-
-				// sampling error
-
-				// detecting sound
-				double f_rms = features.rms(data);
-				if (f_rms < 250) {
-					setActivityText("silence");
-					time1 = System.currentTimeMillis();
-					Log.d(TAG, "slience with rms:" + f_rms + "time "
-							+ (time1 - time) / 1000);
-					continue;
-				}
-
+				
 				// detecting voice
-				for (int i = 0; i < row; i++) {
+				for (int i = 0; i < row; i++) // {
 					System.arraycopy(data, i * col, data_buffer[i], 0, col);
+					/*
 					rms[i] = features.rms(data_buffer[i]);
 					zcr[i] = features.zcr(data_buffer[i]);
 				}
 
 				zcr_m = features.mean(zcr);
-				rms_m = features.mean(rms);
 				zcr_v = features.var(zcr, zcr_m);
+				rms_m = features.mean(rms);
 				rms_s = Math.sqrt(features.var(rms, rms_m)) / rms_m;
+				
 				rms_threshold = rms_m * 0.5;
+			
 				lefr = 0;
 
 				for (double i : rms) {
 					if (i < rms_threshold)
 						lefr++;
 				}
-
 				if (AudioInference.tree(zcr_v, zcr_m, rms_s, lefr) == 0) {
 					// setActivityText("noise");
 					time2 = System.currentTimeMillis();
 					Log.d(TAG, "noise" + "time " + (time2 - time1) / 1000);
 					// continue;
 				}
+				*/
 
 				fdata[0] = data[0];
 				for (int i = 1; i < framePeriod; i++) {
@@ -472,7 +480,7 @@ public class RehearsalAudioRecorder {
 							for (int j = 0; j < framePeriod; j++) {
 								rdata[j] = data[j];
 							}
-							time2 = System.currentTimeMillis();
+							// time2 = System.currentTimeMillis();
 							features.conv(data, framePeriod, teager_index,
 									tdata);
 							features.teo(tdata, framePeriod, tdata_buffer);
@@ -492,8 +500,8 @@ public class RehearsalAudioRecorder {
 
 				double[] pitchFeature = new double[2];
 				features.var(pitch, pitchFeature);
-				time3 = System.currentTimeMillis();
-				Log.d(TAG, "feature time " + (time3 - time2) / 1000);
+				// time3 = System.currentTimeMillis();
+				// Log.d(TAG, "feature time " + (time3 - time2) / 1000);
 
 				int c = 0;
 				int s = 0;
@@ -509,11 +517,11 @@ public class RehearsalAudioRecorder {
 				Log.d(TAG, this + "voiced features " + c + " " + s);// +
 																	// " "+
 																	// Arrays.toString(featureList.get(0)));
-				time4 = System.currentTimeMillis();
+				// time4 = System.currentTimeMillis();
 				// Log.d(TAG,this + "pitch features " + c + " " +
 				// Arrays.toString(pitch.toArray()));
-				Log.d(TAG, "Inf time " + (time4 - time3) / 1000);
-				Log.d(TAG, "total time " + (time4 - time) / 1000);
+				// Log.d(TAG, "Inf time " + (time4 - time3) / 1000);
+				// Log.d(TAG, "total time " + (time4 - time) / 1000);
 
 				if (s > c / 2)
 					setActivityText(String.format("stressed"));
