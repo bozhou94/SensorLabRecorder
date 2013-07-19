@@ -537,7 +537,9 @@ public class RehearsalAudioRecorder {
 		if (text.equals("Off") && sampleTotal > 0)
 			deliverProbe("off", stressTotal * 1.0 / sampleTotal,
 					(relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
-
+		else if (text.equals("Off")) 
+			deliverProbe("off", 0, 0);
+		
 		else {
 			updateCounters(text);
 			updateAnalytic(text);
