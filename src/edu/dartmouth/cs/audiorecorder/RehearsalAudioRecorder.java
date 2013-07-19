@@ -71,6 +71,9 @@ public class RehearsalAudioRecorder {
 	// Used for analytics
 	private String prevTime;
 	private String prevStatus;
+	private int sampleTotal;
+	private int stressTotal;
+	private int relevanceTotal;
 
 	/**
 	 * 
@@ -536,32 +539,61 @@ public class RehearsalAudioRecorder {
 	 * Notifies the handler of the analytic activity of the current status
 	 */
 	public synchronized void setActivityText(final String text) {
-
+		
+		if (text.equals("Off") && sampleTotal > 0) 
+			deliverProbe("off", stressTotal * 1.0 / sampleTotal, (relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
+		
+		updateCounters(text);
+		updateAnalytic(text);
+		
 		// Displays the last 10 minutes to the user
 		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 				.getInstance().getTime());
-		if (prevTime == null || !prevTime.equals(curTime)) {
-			AudioRecorderService.changeHistory.addFirst(curTime + ": " + text);
+		if (prevTime == null) prevTime = curTime;
+		else if (!prevTime.equals(curTime)) {
+			double stressage = stressTotal * 1.0 / sampleTotal;
+			double relevage = (relevanceTotal + sampleTotal) * 1.0 / sampleTotal;
+			String display = relevage < 0.5 ? "silence" : (stressage < 0.5 ? "not stressed" : "stressed");
+			AudioRecorderService.changeHistory.addFirst(prevTime + ": " + display);
 			if (AudioRecorderService.changeHistory.size() > 10)
 				AudioRecorderService.changeHistory.removeLast();
 			prevTime = curTime;
-			updateAnalytic(text);
-		}
-
-		// Displays all the mode changes to probing
-		if (prevStatus == null || !prevStatus.equals(text)) {
-
-			if (probeWriter != null) {
-				ProbeBuilder probe = new ProbeBuilder();
-				probe.withTimestamp(new SimpleDateFormat(
-						"yyyy-MM-dd'T'HH:mm'Z'").format(new Date()));
-				probeWriter.write(probe, text);
-			}
-			prevStatus = text;
-			updateAnalytic(text);
+			deliverProbe(display, stressage, relevage);
 		}
 	}
 
+	/*
+	 * Updates the counters so percentages can be calculated later 
+	 */
+	private void updateCounters(final String text) {
+		sampleTotal++;
+		if (text.equals("stressed"))
+			stressTotal++;
+		else if (text.equals("silence"))
+			relevanceTotal--;
+	}
+	
+	/*
+	 * writes to probe the percentages of stress and relevance
+	 * Adds an additional "Turned off" if the service turning off resulted in this call
+	 */
+	private void deliverProbe(final String text, double stress, double relevance) {
+		
+		if (probeWriter != null) {
+			ProbeBuilder probe = new ProbeBuilder();
+			probe.withTimestamp(new SimpleDateFormat(
+					"yyyy-MM-dd'T'HH:mm'Z'").format(new Date()));
+			probeWriter.write(probe, text, ""+stress, ""+relevance);
+		}
+		
+		sampleTotal = 0;
+		stressTotal = 0;
+		relevanceTotal = 0;
+	}
+	
+	/*
+	 * Updates the analytic activity
+	 */
 	private void updateAnalytic(final String text) {
 		Handler handler = StressActivity.getHandler();
 		if (null != handler) {

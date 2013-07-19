@@ -60,12 +60,9 @@ public class StressActivity extends Activity {
 				AudioRecorderService.AUDIORECORDER_OFF));
 		sMessageHandler = mHandler;
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				SensorPreferenceActivity.IS_ON, false)) {
+				SensorPreferenceActivity.IS_ON, false))
 			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 					R.drawable.mic_on, 0, 0, 0);
-			if (AudioRecorderService.changeHistory.get(0) != null)
-				mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
-		}
 		mAdapter.notifyDataSetChanged();
 	}
 
@@ -93,8 +90,6 @@ public class StressActivity extends Activity {
 					.equals(AudioRecorderService.AUDIORECORDER_ON)) {
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_on, 0, 0, 0);
-				if (AudioRecorderService.changeHistory.get(0) != null)
-					mTvGenericText.setText(": " + AudioRecorderService.changeHistory.get(0).split(": ")[1]);
 			}
 			else if (intent.getAction().equals(
 					AudioRecorderService.AUDIORECORDER_OFF)) {
