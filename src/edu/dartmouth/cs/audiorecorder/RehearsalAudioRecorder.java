@@ -350,7 +350,7 @@ public class RehearsalAudioRecorder {
 		private final int nmfcc = 20;
 		// private int lefr;
 		private int voicedFrameNum = 0;
-		//private double zcr_m, zcr_v, rms_m, rms_s, rms_threshold;
+		// private double zcr_m, zcr_v, rms_m, rms_s, rms_threshold;
 		private double rate = -1;
 		private short[] data;
 		private float[] rdata;
@@ -399,69 +399,63 @@ public class RehearsalAudioRecorder {
 		@Override
 		public void run() {
 			while (true) {
-				//double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
-				
+				// double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
+
 				audioFromQueueData = cirBuffer.deleteAndHandleData();
-				
+
 				/* data length is in dataSize */
 				// int dataSize = audioFromQueueData.mSize;
 				if (audioFromQueueData.mSize < framePeriod)
 					continue;
-				
-				//time = System.currentTimeMillis();
+
+				// time = System.currentTimeMillis();
 				/* data to process is in data */
 				data = audioFromQueueData.mData;
-				
+
 				// sampling error
 
 				// detecting sound
-				//double f_rms = features.rms(data);
+				// double f_rms = features.rms(data);
 				if (features.rms(data) < 250) {
 					setActivityText("silence");
-					//time1 = System.currentTimeMillis();
-					//Log.d(TAG, "slience with rms:" + f_rms + "time "
-						//	+ (time1 - time) / 1000);
+					// time1 = System.currentTimeMillis();
+					// Log.d(TAG, "slience with rms:" + f_rms + "time "
+					// + (time1 - time) / 1000);
 					continue;
 				}
 
 				// System.arraycopy(audiodata.mData, 0, data, 0,
 				// framePeriod);
-				
+
 				voicedFrameNum = 0;
 				pitch.clear();
 				featureList.clear();
 
 				// setActivityText(String.format("dataSize %d shorts %d",
 				// dataSize, data.length));
-				
+
 				// detecting voice
-				for (int i = 0; i < row; i++) // {
+				for (int i = 0; i < row; i++)
+					// {
 					System.arraycopy(data, i * col, data_buffer[i], 0, col);
-					/*
-					rms[i] = features.rms(data_buffer[i]);
-					zcr[i] = features.zcr(data_buffer[i]);
-				}
-
-				zcr_m = features.mean(zcr);
-				zcr_v = features.var(zcr, zcr_m);
-				rms_m = features.mean(rms);
-				rms_s = Math.sqrt(features.var(rms, rms_m)) / rms_m;
-				
-				rms_threshold = rms_m * 0.5;
-			
-				lefr = 0;
-
-				for (double i : rms) {
-					if (i < rms_threshold)
-						lefr++;
-				}
-				if (AudioInference.tree(zcr_v, zcr_m, rms_s, lefr) == 0) {
-					// setActivityText("noise");
-					time2 = System.currentTimeMillis();
-					Log.d(TAG, "noise" + "time " + (time2 - time1) / 1000);
-					// continue;
-				}
-				*/
+				/*
+				 * rms[i] = features.rms(data_buffer[i]); zcr[i] =
+				 * features.zcr(data_buffer[i]); }
+				 * 
+				 * zcr_m = features.mean(zcr); zcr_v = features.var(zcr, zcr_m);
+				 * rms_m = features.mean(rms); rms_s =
+				 * Math.sqrt(features.var(rms, rms_m)) / rms_m;
+				 * 
+				 * rms_threshold = rms_m * 0.5;
+				 * 
+				 * lefr = 0;
+				 * 
+				 * for (double i : rms) { if (i < rms_threshold) lefr++; } if
+				 * (AudioInference.tree(zcr_v, zcr_m, rms_s, lefr) == 0) { //
+				 * setActivityText("noise"); time2 = System.currentTimeMillis();
+				 * Log.d(TAG, "noise" + "time " + (time2 - time1) / 1000); //
+				 * continue; }
+				 */
 
 				fdata[0] = data[0];
 				for (int i = 1; i < framePeriod; i++) {
@@ -539,31 +533,38 @@ public class RehearsalAudioRecorder {
 	 * Notifies the handler of the analytic activity of the current status
 	 */
 	public synchronized void setActivityText(final String text) {
-		
-		if (text.equals("Off") && sampleTotal > 0) 
-			deliverProbe("off", stressTotal * 1.0 / sampleTotal, (relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
-		
-		updateCounters(text);
-		updateAnalytic(text);
-		
-		// Displays the last 10 minutes to the user
-		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
-				.getInstance().getTime());
-		if (prevTime == null) prevTime = curTime;
-		else if (!prevTime.equals(curTime)) {
-			double stressage = stressTotal * 1.0 / sampleTotal;
-			double relevage = (relevanceTotal + sampleTotal) * 1.0 / sampleTotal;
-			String display = relevage < 0.5 ? "silence" : (stressage < 0.5 ? "not stressed" : "stressed");
-			AudioRecorderService.changeHistory.addFirst(prevTime + ": " + display);
-			if (AudioRecorderService.changeHistory.size() > 10)
-				AudioRecorderService.changeHistory.removeLast();
-			prevTime = curTime;
-			deliverProbe(display, stressage, relevage);
+
+		if (text.equals("Off") && sampleTotal > 0)
+			deliverProbe("off", stressTotal * 1.0 / sampleTotal,
+					(relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
+
+		else {
+			updateCounters(text);
+			updateAnalytic(text);
+
+			// Displays the last 10 minutes to the user
+			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
+					.getInstance().getTime());
+			if (prevTime == null)
+				prevTime = curTime;
+			else if (!prevTime.equals(curTime)) {
+				double stressage = stressTotal * 1.0 / sampleTotal;
+				double relevage = (relevanceTotal + sampleTotal) * 1.0
+						/ sampleTotal;
+				String display = relevage < 0.5 ? "silence"
+						: (stressage < 0.5 ? "not stressed" : "stressed");
+				AudioRecorderService.changeHistory.addFirst(prevTime + ": "
+						+ display);
+				if (AudioRecorderService.changeHistory.size() > 10)
+					AudioRecorderService.changeHistory.removeLast();
+				prevTime = curTime;
+				deliverProbe(display, stressage, relevage);
+			}
 		}
 	}
 
 	/*
-	 * Updates the counters so percentages can be calculated later 
+	 * Updates the counters so percentages can be calculated later
 	 */
 	private void updateCounters(final String text) {
 		sampleTotal++;
@@ -572,25 +573,25 @@ public class RehearsalAudioRecorder {
 		else if (text.equals("silence"))
 			relevanceTotal--;
 	}
-	
+
 	/*
-	 * writes to probe the percentages of stress and relevance
-	 * Adds an additional "Turned off" if the service turning off resulted in this call
+	 * writes to probe the percentages of stress and relevance Adds an
+	 * additional "Turned off" if the service turning off resulted in this call
 	 */
 	private void deliverProbe(final String text, double stress, double relevance) {
-		
+
 		if (probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
-			probe.withTimestamp(new SimpleDateFormat(
-					"yyyy-MM-dd'T'HH:mm'Z'").format(new Date()));
-			probeWriter.write(probe, text, ""+stress, ""+relevance);
+			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+					.format(new Date()));
+			probeWriter.write(probe, text, "" + stress, "" + relevance);
 		}
-		
+
 		sampleTotal = 0;
 		stressTotal = 0;
 		relevanceTotal = 0;
 	}
-	
+
 	/*
 	 * Updates the analytic activity
 	 */

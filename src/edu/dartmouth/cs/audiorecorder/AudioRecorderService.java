@@ -55,6 +55,7 @@ public class AudioRecorderService extends Service {
 	
 	private IncomingCallDetector mIncomingCallDetector;
 	private OutgoingCallDetector mOutgoingCallDetector;
+	private TimeChangeReceiver mTimeChangeReceiver;
 	private StressSenseProbeWriter probeWriter;
 	private NotificationManager mNotifManager;
 
@@ -94,10 +95,12 @@ public class AudioRecorderService extends Service {
 					AudioFormat.ENCODING_PCM_16BIT, false);
 			mIncomingCallDetector = new IncomingCallDetector();
 			mOutgoingCallDetector = new OutgoingCallDetector();
+			mTimeChangeReceiver = new TimeChangeReceiver();
 			registerReceiver(mIncomingCallDetector, new IntentFilter(
 					"android.intent.action.PHONE_STATE"));
 			registerReceiver(mOutgoingCallDetector, new IntentFilter(
 					Intent.ACTION_NEW_OUTGOING_CALL));
+			registerReceiver(mTimeChangeReceiver, new IntentFilter(Intent.ACTION_TIME_TICK));
 
 			/*
 			 * The Handler calls the Blackout runnable almost every minute to see if
@@ -140,7 +143,6 @@ public class AudioRecorderService extends Service {
 					} else if (!canRunNow && isRecording) {
 						stopRecording(true);
 					}
-					handler.postDelayed(Blackout, 45000);
 				}
 			};
 
@@ -159,11 +161,10 @@ public class AudioRecorderService extends Service {
 	public void onDestroy() {
 		unregisterReceiver(mIncomingCallDetector);
 		unregisterReceiver(mOutgoingCallDetector);
+		unregisterReceiver(mTimeChangeReceiver);
 		mWl.release();
 		if (isRecording)
 			stopRecording(true);
-		if (probeWriter != null) 
-			mWavAudioRecorder.setActivityText("Off");
 		probeWriter.close();
 		mWavAudioRecorder.release();
 		handler.removeCallbacks(Blackout);
@@ -202,6 +203,8 @@ public class AudioRecorderService extends Service {
 
 		if (mWavAudioRecorder.getState() == RehearsalAudioRecorder.State.RECORDING) {
 			isRecording = false;
+			if (probeWriter != null) 
+				mWavAudioRecorder.setActivityText("Off");
 			Intent i = new Intent();
 			i.setAction(AUDIORECORDER_OFF);
 			sendBroadcast(i);
@@ -267,6 +270,14 @@ public class AudioRecorderService extends Service {
 		public void onReceive(Context context, Intent intent) {
 			Log.i(TAG, "Outgoing call, stopping recording");
 			stopRecording(true);
+		}
+	}
+	
+	class TimeChangeReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			handler.post(Blackout);
 		}
 	}
 
