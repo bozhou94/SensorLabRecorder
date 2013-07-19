@@ -70,7 +70,6 @@ public class RehearsalAudioRecorder {
 
 	// Used for analytics
 	private String prevTime;
-	private String prevStatus;
 	private int sampleTotal;
 	private int stressTotal;
 	private int relevanceTotal;
@@ -539,7 +538,6 @@ public class RehearsalAudioRecorder {
 					(relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
 		else if (text.equals("Off")) 
 			deliverProbe("off", 0, 0);
-		
 		else {
 			updateCounters(text);
 			updateAnalytic(text);
@@ -565,7 +563,7 @@ public class RehearsalAudioRecorder {
 		}
 	}
 
-	/*
+	/**
 	 * Updates the counters so percentages can be calculated later
 	 */
 	private void updateCounters(final String text) {
@@ -576,7 +574,7 @@ public class RehearsalAudioRecorder {
 			relevanceTotal--;
 	}
 
-	/*
+	/**
 	 * writes to probe the percentages of stress and relevance Adds an
 	 * additional "Turned off" if the service turning off resulted in this call
 	 */
@@ -594,7 +592,7 @@ public class RehearsalAudioRecorder {
 		relevanceTotal = 0;
 	}
 
-	/*
+	/**
 	 * Updates the analytic activity
 	 */
 	private void updateAnalytic(final String text) {
