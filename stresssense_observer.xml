@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <observer>
-    <id>edu.dartmouth.cs.audiorecorder</id>
-    <version>2013081701</version>
+    <id>edu.dartmouth.cs.audiorecorder.summary</id>
+    <version>2013072200</version>
 
-    <name>StressSense</name>
+    <name>StressSense.MinuteSummary</name>
     <description>A probe that tracks information retrieved by StressSense.</description>
     <versionString>1.0</versionString>
 
     <stream>
         <id>stresssense</id>
-        <version>2013071801</version>
+        <version>2013072200</version>
 
         <name>StressSense</name>
         <description>Inferred level of stress</description>

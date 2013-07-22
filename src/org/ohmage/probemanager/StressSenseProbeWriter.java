@@ -11,22 +11,22 @@ import org.json.JSONObject;
 
 public class StressSenseProbeWriter extends ProbeWriter {
 
-	private static final String OBSERVER_ID = "edu.dartmouth.cs.audiorecorder";
-	private static final int OBSERVER_VERSION = 2013081702;
+	private static final String OBSERVER_ID = "edu.dartmouth.cs.audiorecorder.summary";
+	private static final int OBSERVER_VERSION = 2013072200;
 	private static final String STREAM_SIMPLE = "stresssense";
-    private static final int STREAM_SIMPLE_VERSION = 2013071802;
+    private static final int STREAM_SIMPLE_VERSION = 2013072200;
 
 	public StressSenseProbeWriter(Context context) {
 		super(context);
 	}
 
-	public void write(ProbeBuilder probe, String mode, String stressage, String relevage /*, short[] audio*/) {
+	public void write(ProbeBuilder probe, String mode, String stressage /*, short[] audio*/) {
 		
 		try {
 			probe.setObserver(OBSERVER_ID, OBSERVER_VERSION);
 			probe.setStream(STREAM_SIMPLE, STREAM_SIMPLE_VERSION);
 			JSONObject data = new JSONObject();
-			JSONArray list = new JSONArray(Arrays.asList(mode, stressage, relevage));
+			JSONArray list = new JSONArray(Arrays.asList(mode, stressage));
 			data.put("mode", list);
 			/*
 			JSONArray ja = new JSONArray();

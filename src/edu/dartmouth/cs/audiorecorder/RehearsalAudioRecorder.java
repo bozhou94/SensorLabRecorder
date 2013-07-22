@@ -72,7 +72,6 @@ public class RehearsalAudioRecorder {
 	private String prevTime;
 	private int sampleTotal;
 	private int stressTotal;
-	private int relevanceTotal;
 
 	/**
 	 * 
@@ -534,10 +533,9 @@ public class RehearsalAudioRecorder {
 	public synchronized void setActivityText(final String text) {
 
 		if (text.equals("Off") && sampleTotal > 0)
-			deliverProbe("off", stressTotal * 1.0 / sampleTotal,
-					(relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
-		else if (text.equals("Off")) 
-			deliverProbe("off", 0, 0);
+			deliverProbe("off", stressTotal * 1.0 / sampleTotal);
+		else if (text.equals("Off"))
+			deliverProbe("off", 0);
 		else {
 			updateCounters(text);
 			updateAnalytic(text);
@@ -548,17 +546,21 @@ public class RehearsalAudioRecorder {
 			if (prevTime == null)
 				prevTime = curTime;
 			else if (!prevTime.equals(curTime)) {
-				double stressage = stressTotal * 1.0 / sampleTotal;
-				double relevage = (relevanceTotal + sampleTotal) * 1.0
-						/ sampleTotal;
-				String display = relevage < 0.5 ? "silence"
-						: (stressage < 0.5 ? "not stressed" : "stressed");
+				String display;
+				if (sampleTotal == 0) {
+					display = "silence";
+					deliverProbe(display, 0);
+				} else {
+					double stressage = stressTotal * 1.0 / sampleTotal;
+					display = stressage < 0.5 ? "not stressed" : "stressed";
+					deliverProbe(display, stressage);
+				}
 				AudioRecorderService.changeHistory.addFirst(prevTime + ": "
 						+ display);
 				if (AudioRecorderService.changeHistory.size() > 10)
 					AudioRecorderService.changeHistory.removeLast();
 				prevTime = curTime;
-				deliverProbe(display, stressage, relevage);
+
 			}
 		}
 	}
@@ -571,25 +573,24 @@ public class RehearsalAudioRecorder {
 		if (text.equals("stressed"))
 			stressTotal++;
 		else if (text.equals("silence"))
-			relevanceTotal--;
+			sampleTotal--;
 	}
 
 	/**
 	 * writes to probe the percentages of stress and relevance Adds an
 	 * additional "Turned off" if the service turning off resulted in this call
 	 */
-	private void deliverProbe(final String text, double stress, double relevance) {
+	private void deliverProbe(final String text, double stress) {
 
 		if (probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
 			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
 					.format(new Date()));
-			probeWriter.write(probe, text, "" + stress, "" + relevance);
+			probeWriter.write(probe, text, "" + stress);
 		}
 
 		sampleTotal = 0;
 		stressTotal = 0;
-		relevanceTotal = 0;
 	}
 
 	/**
