@@ -29,13 +29,14 @@
         android:textSize="30sp" />
     
     <TextView
+        android:id="@+id/time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:shadowColor="#e8e8e8"
         android:shadowDx="1"
         android:shadowDy="1"
         android:shadowRadius="1"
-        android:text="Yesterday" />
+        android:text="Hourly Summary:" />
 
     <View
         android:layout_width="match_parent"

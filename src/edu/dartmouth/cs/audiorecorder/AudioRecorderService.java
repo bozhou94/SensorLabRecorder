@@ -53,6 +53,8 @@ public class AudioRecorderService extends Service {
 
 	private static final String TAG = "AudioRecorderService";
 	public static final String CALCULATE_PERCENTAGE = "edu.dartmouth.cs.audiorecorder.AudioRecorder.action.CALCULATE";
+	public static final String PERCENTAGE_KEY = "per_key";
+	public static final String PERCENTAGE_PREV_KEY = "per_prev_key";
 	public static final String PERCENT_STRESSED = "per_stressed";
 	public static final String PERCENT_NSTRESSED = "per_nstressed";
 	public static final String PERCENT_SILENT = "per_silent";
@@ -73,6 +75,7 @@ public class AudioRecorderService extends Service {
 	private TriggerDB db;
 	private Cursor c;
 	private boolean isRecording = false;
+	private String prevTime;
 
 	// Audio Processing Log History (Used in Analytics/StressActivity)
 	public static LinkedList<String> changeHistory = new LinkedList<String>();
@@ -91,6 +94,9 @@ public class AudioRecorderService extends Service {
 	public void onCreate() {
 		Log.i(TAG, "onCreate()");
 		try {
+			prevTime = new SimpleDateFormat("h:mm a").format(Calendar
+					.getInstance().getTime());
+			
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 			mWl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
 					AudioRecorderService.class.getName());
@@ -185,11 +191,13 @@ public class AudioRecorderService extends Service {
 	/**
 	 * Saves the daily total values
 	 */
-	private void saveSampleTotals() {
+	private void saveSampleTotals(String time, String prevTime) {
 		Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
 		editor.putInt(PERCENT_STRESSED, curTotals[0]);
 		editor.putInt(PERCENT_NSTRESSED, curTotals[1]);
 		editor.putInt(PERCENT_SILENT, curTotals[2]);
+		editor.putString(PERCENTAGE_KEY, time);
+		editor.putString(PERCENTAGE_PREV_KEY, prevTime);
 		editor.commit();
 	}
 	
@@ -300,8 +308,9 @@ public class AudioRecorderService extends Service {
 			handler.post(Blackout);
 			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 					.getInstance().getTime());
-			if (curTime.equals("12:00 AM")) {
-				saveSampleTotals();
+			if (curTime.substring(3,5).equals("00") || curTime.substring(2,4).equals("00")) {
+				saveSampleTotals(curTime, prevTime);
+				prevTime = curTime;
 				curTotals = new int[3];
 			}
 		}

@@ -32,6 +32,7 @@ public class StressActivity extends Activity {
 	private TextView mStressed;
 	private TextView mNStressed;
 	private TextView mSilence;
+	private TextView mTimeText;
 
 	// Used for status writing
 	private static Handler sMessageHandler;
@@ -49,6 +50,7 @@ public class StressActivity extends Activity {
 		mSampleReceiver = new SamplePercentageReceiver();
 
 		mTvGenericText = (TextView) findViewById(R.id.tvStatus);
+		mTimeText = (TextView) findViewById(R.id.time);
 		mTvGenericText.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -107,6 +109,9 @@ public class StressActivity extends Activity {
 			mStressed.setText(100.0 * numSSamples / total + "%");
 			mNStressed.setText(100.0 * numNSamples / total + "%");
 			mSilence.setText(100.0 * numSiSamples / total + "%");
+			mTimeText.setText("Hourly Summary: " + PreferenceManager.getDefaultSharedPreferences(this)
+					.getString(AudioRecorderService.PERCENTAGE_PREV_KEY, "") + " to "  + PreferenceManager.getDefaultSharedPreferences(this)
+					.getString(AudioRecorderService.PERCENTAGE_KEY, ""));
 		}
 	}
 
