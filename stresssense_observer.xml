@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <observer>
     <id>edu.dartmouth.cs.audiorecorder</id>
-    <version>2013081701</version>
+    <version>2013081703</version>
 
     <name>StressSense</name>
     <description>A probe that tracks information retrieved by StressSense.</description>
@@ -9,7 +9,7 @@
 
     <stream>
         <id>stresssense</id>
-        <version>2013071801</version>
+        <version>2013072400</version>
 
         <name>StressSense</name>
         <description>Inferred level of stress</description>

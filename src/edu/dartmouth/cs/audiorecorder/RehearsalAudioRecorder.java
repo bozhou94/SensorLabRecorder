@@ -70,9 +70,7 @@ public class RehearsalAudioRecorder {
 
 	// Used for analytics
 	private String prevTime;
-	private int sampleTotal;
-	private int stressTotal;
-	private int relevanceTotal;
+	private String prevStatus;
 
 	/**
 	 * 
@@ -533,63 +531,32 @@ public class RehearsalAudioRecorder {
 	 */
 	public synchronized void setActivityText(final String text) {
 
-		if (text.equals("Off") && sampleTotal > 0)
-			deliverProbe("off", stressTotal * 1.0 / sampleTotal,
-					(relevanceTotal + sampleTotal) * 1.0 / sampleTotal);
-		else if (text.equals("Off")) 
-			deliverProbe("off", 0, 0);
-		else {
-			updateCounters(text);
-			updateAnalytic(text);
-
-			// Displays the last 10 minutes to the user
-			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
-					.getInstance().getTime());
-			if (prevTime == null)
-				prevTime = curTime;
-			else if (!prevTime.equals(curTime)) {
-				double stressage = stressTotal * 1.0 / sampleTotal;
-				double relevage = (relevanceTotal + sampleTotal) * 1.0
-						/ sampleTotal;
-				String display = relevage < 0.5 ? "silence"
-						: (stressage < 0.5 ? "not stressed" : "stressed");
-				AudioRecorderService.changeHistory.addFirst(prevTime + ": "
-						+ display);
-				if (AudioRecorderService.changeHistory.size() > 10)
-					AudioRecorderService.changeHistory.removeLast();
-				prevTime = curTime;
-				deliverProbe(display, stressage, relevage);
-			}
-		}
-	}
-
-	/**
-	 * Updates the counters so percentages can be calculated later
-	 */
-	private void updateCounters(final String text) {
-		sampleTotal++;
-		if (text.equals("stressed"))
-			stressTotal++;
+		if (text.equals("stressed")) 
+			AudioRecorderService.curTotals[0]++;
+		else if (text.equals("not stressed"))
+			AudioRecorderService.curTotals[1]++;
 		else if (text.equals("silence"))
-			relevanceTotal--;
-	}
-
-	/**
-	 * writes to probe the percentages of stress and relevance Adds an
-	 * additional "Turned off" if the service turning off resulted in this call
-	 */
-	private void deliverProbe(final String text, double stress, double relevance) {
-
+			AudioRecorderService.curTotals[2]++;
+		
 		if (probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
 			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
 					.format(new Date()));
-			probeWriter.write(probe, text, "" + stress, "" + relevance);
+			probeWriter.write(probe, text);
 		}
 
-		sampleTotal = 0;
-		stressTotal = 0;
-		relevanceTotal = 0;
+		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
+				.getInstance().getTime());
+		if (prevTime == null || !prevTime.equals(curTime)) {
+			AudioRecorderService.changeHistory.addFirst(curTime + ": " + text);
+			if (AudioRecorderService.changeHistory.size() > 10)
+				AudioRecorderService.changeHistory.removeLast();
+			prevTime = curTime;
+			updateAnalytic(text);
+		}
+		
+		else if (prevStatus == null || !prevStatus.equals(text))
+			updateAnalytic(text);
 	}
 
 	/**

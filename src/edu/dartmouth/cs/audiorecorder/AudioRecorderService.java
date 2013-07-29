@@ -1,5 +1,7 @@
 package edu.dartmouth.cs.audiorecorder;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.LinkedList;
 
 import org.ohmage.mobility.blackout.BlackoutDesc;
@@ -68,6 +70,8 @@ public class AudioRecorderService extends Service {
 
 	// Audio Processing Log History (Used in Analytics/StressActivity)
 	public static LinkedList<String> changeHistory = new LinkedList<String>();
+	public static int[] prevTotals = new int[3];
+	public static int[] curTotals = new int[3];
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -278,6 +282,12 @@ public class AudioRecorderService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			handler.post(Blackout);
+			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
+					.getInstance().getTime());
+			if (curTime.equals("0:00")) {
+				prevTotals = curTotals;
+				curTotals = new int[3];
+			}
 		}
 	}
 
