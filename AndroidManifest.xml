@@ -73,6 +73,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="edu.dartmouth.cs.audiorecorder.analytics.AnalyticHistory"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
+        </activity>
         <activity android:name="org.ohmage.mobility.blackout.ui.TriggerListActivity" />
         <activity android:name="org.ohmage.mobility.blackout.BlackoutEditActivity" />
 

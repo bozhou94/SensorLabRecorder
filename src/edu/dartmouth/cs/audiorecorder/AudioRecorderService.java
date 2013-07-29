@@ -17,6 +17,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.MediaRecorder.AudioSource;
@@ -28,6 +29,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.Process;
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -50,6 +52,10 @@ public class AudioRecorderService extends Service {
 	private static final int BLACKOUT_NOTIFICATION_ID = 0;
 
 	private static final String TAG = "AudioRecorderService";
+	public static final String CALCULATE_PERCENTAGE = "edu.dartmouth.cs.audiorecorder.AudioRecorder.action.CALCULATE";
+	public static final String PERCENT_STRESSED = "per_stressed";
+	public static final String PERCENT_NSTRESSED = "per_nstressed";
+	public static final String PERCENT_SILENT = "per_silent";
 
 	private PowerManager.WakeLock mWl;
 	
@@ -70,8 +76,7 @@ public class AudioRecorderService extends Service {
 
 	// Audio Processing Log History (Used in Analytics/StressActivity)
 	public static LinkedList<String> changeHistory = new LinkedList<String>();
-	public static int[] prevTotals = new int[3];
-	public static int[] curTotals = new int[3];
+	public static int[] curTotals = new int[3]; //Stressed, not stressed, silent
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -177,6 +182,17 @@ public class AudioRecorderService extends Service {
 		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
 	}
 
+	/**
+	 * Saves the daily total values
+	 */
+	private void saveSampleTotals() {
+		Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+		editor.putInt(PERCENT_STRESSED, curTotals[0]);
+		editor.putInt(PERCENT_NSTRESSED, curTotals[1]);
+		editor.putInt(PERCENT_SILENT, curTotals[2]);
+		editor.commit();
+	}
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		// start the service on foreground to avoid it being killed too soon.
@@ -284,8 +300,8 @@ public class AudioRecorderService extends Service {
 			handler.post(Blackout);
 			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 					.getInstance().getTime());
-			if (curTime.equals("0:00")) {
-				prevTotals = curTotals;
+			if (curTime.equals("12:00 AM")) {
+				saveSampleTotals();
 				curTotals = new int[3];
 			}
 		}

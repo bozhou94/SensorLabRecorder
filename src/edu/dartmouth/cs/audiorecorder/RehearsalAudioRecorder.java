@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import edu.dartmouth.cs.audiorecorder.analytics.AnalyticHistory;
 import edu.dartmouth.cs.audiorecorder.analytics.StressActivity;
 import edu.dartmouth.cs.mltoolkit.processing.*;
 
@@ -531,13 +532,13 @@ public class RehearsalAudioRecorder {
 	 */
 	public synchronized void setActivityText(final String text) {
 
-		if (text.equals("stressed")) 
+		if (text.equals("stressed"))
 			AudioRecorderService.curTotals[0]++;
 		else if (text.equals("not stressed"))
 			AudioRecorderService.curTotals[1]++;
 		else if (text.equals("silence"))
 			AudioRecorderService.curTotals[2]++;
-		
+
 		if (probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
 			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
@@ -552,25 +553,29 @@ public class RehearsalAudioRecorder {
 			if (AudioRecorderService.changeHistory.size() > 10)
 				AudioRecorderService.changeHistory.removeLast();
 			prevTime = curTime;
-			updateAnalytic(text);
+			Handler handler = AnalyticHistory.getHandler();
+			if (null != handler) {
+				Message m = new Message();
+				Bundle data = new Bundle();
+				data.putString(
+						AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
+						text);
+				m.setData(data);
+				handler.sendMessage(m);
+			}
 		}
-		
-		else if (prevStatus == null || !prevStatus.equals(text))
-			updateAnalytic(text);
-	}
 
-	/**
-	 * Updates the analytic activity
-	 */
-	private void updateAnalytic(final String text) {
-		Handler handler = StressActivity.getHandler();
-		if (null != handler) {
-			Message m = new Message();
-			Bundle data = new Bundle();
-			data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-					text);
-			m.setData(data);
-			handler.sendMessage(m);
+		else if (prevStatus == null || !prevStatus.equals(text)) {
+			Handler handler = StressActivity.getHandler();
+			if (null != handler) {
+				Message m = new Message();
+				Bundle data = new Bundle();
+				data.putString(
+						AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
+						text);
+				m.setData(data);
+				handler.sendMessage(m);
+			}
 		}
 	}
 }
