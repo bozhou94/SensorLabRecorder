@@ -159,6 +159,7 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		db.open();
 		boolean runningNow = true;
 		Cursor c = db.getAllTriggers();
+		SimpleTime now = new SimpleTime();
 		if (c.moveToFirst()) {
 			do {
 				int trigId = c
@@ -170,9 +171,9 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 				if (!conf.loadString(trigDesc)) {
 					continue;
 				}
+				
 				SimpleTime start = conf.getRangeStart();
-				SimpleTime end = conf.getRangeEnd();
-				SimpleTime now = new SimpleTime();
+				SimpleTime end = conf.getRangeEnd();	
 				if (!start.isAfter(now) && !end.isBefore(now)) {
 					runningNow = false;
 				}

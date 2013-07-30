@@ -25,14 +25,10 @@ import android.media.AudioFormat;
 import android.media.MediaRecorder.AudioSource;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
-import android.os.Process;
 import android.preference.PreferenceManager;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 public class AudioRecorderService extends Service {
@@ -102,16 +98,16 @@ public class AudioRecorderService extends Service {
 			prevTime = new SimpleDateFormat("h:mm a").format(Calendar
 					.getInstance().getTime());
 
-			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			mWl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-					AudioRecorderService.class.getName());
+			mWl = ((PowerManager) getSystemService(Context.POWER_SERVICE))
+					.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+							AudioRecorderService.class.getName());
 			mWl.acquire();
 
 			probeWriter = new StressSenseProbeWriter(this);
 
 			mWavAudioRecorder = new RehearsalAudioRecorder(probeWriter,
 					AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
-					AudioFormat.ENCODING_PCM_16BIT, false);
+					AudioFormat.ENCODING_PCM_16BIT);
 			mIncomingCallDetector = new IncomingCallDetector();
 			mOutgoingCallDetector = new OutgoingCallDetector();
 			mTimeChangeReceiver = new TimeChangeReceiver();
@@ -137,6 +133,7 @@ public class AudioRecorderService extends Service {
 				public void run() {
 
 					boolean canRunNow = true;
+					SimpleTime now = new SimpleTime();
 
 					if (c.moveToFirst()) {
 						do {
@@ -153,7 +150,6 @@ public class AudioRecorderService extends Service {
 
 							SimpleTime start = conf.getRangeStart();
 							SimpleTime end = conf.getRangeEnd();
-							SimpleTime now = new SimpleTime();
 							if (!start.isAfter(now) && !end.isBefore(now))
 								canRunNow = false;
 
@@ -241,6 +237,10 @@ public class AudioRecorderService extends Service {
 			Intent i = new Intent();
 			i.setAction(AUDIORECORDER_OFF);
 			sendBroadcast(i);
+			if (probeWriter != null) {
+				RehearsalAudioRecorder.setActivityText("Off");
+				probeWriter.close();
+			}
 			mWavAudioRecorder.stop();
 			Log.i(TAG, "Recording stopped");
 		}
@@ -260,6 +260,8 @@ public class AudioRecorderService extends Service {
 		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
 
 		if (mWavAudioRecorder.getState() != RehearsalAudioRecorder.State.RECORDING) {
+
+			probeWriter.connect();
 
 			mWavAudioRecorder.reset();
 
@@ -314,10 +316,10 @@ public class AudioRecorderService extends Service {
 			handler.post(Blackout);
 			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 					.getInstance().getTime());
-			
-			AudioRecorderService.changeHistory.addFirst(curTime + ": " + text);
-			if (AudioRecorderService.changeHistory.size() > 10)
-				AudioRecorderService.changeHistory.removeLast();
+
+			changeHistory.addFirst(curTime + ": " + text);
+			if (changeHistory.size() > 10)
+				changeHistory.removeLast();
 			Handler handler = AnalyticHistory.getHandler();
 			if (null != handler) {
 				Message m = new Message();
@@ -332,6 +334,9 @@ public class AudioRecorderService extends Service {
 			if (curTime.substring(3, 5).equals("00")
 					|| curTime.substring(2, 4).equals("00")) {
 				saveSampleTotals(curTime, prevTime);
+				Intent i = new Intent();
+				i.setAction(CALCULATE_PERCENTAGE);
+				sendBroadcast(i);
 				prevTime = curTime;
 				curTotals = new int[3];
 			}

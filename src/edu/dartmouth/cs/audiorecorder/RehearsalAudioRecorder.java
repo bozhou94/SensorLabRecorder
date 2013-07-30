@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import edu.dartmouth.cs.audiorecorder.analytics.AnalyticHistory;
 import edu.dartmouth.cs.audiorecorder.analytics.StressActivity;
 import edu.dartmouth.cs.mltoolkit.processing.*;
 
@@ -27,9 +26,7 @@ public class RehearsalAudioRecorder {
 	public enum State {
 		INITIALIZING, READY, RECORDING, ERROR, STOPPED
 	};
-
-	public static final boolean RECORDING_UNCOMPRESSED = true;
-	public static final boolean RECORDING_COMPRESSED = false;
+	
 	private static final String TAG = "RehearsalAudioRecorder";
 
 	// Recorder used for uncompressed recording
@@ -111,7 +108,7 @@ public class RehearsalAudioRecorder {
 	 * Method used for recording.
 	 */
 	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
-		
+
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
 			new AudioReadingTask().execute();
@@ -134,22 +131,13 @@ public class RehearsalAudioRecorder {
 	 * 
 	 */
 	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter,
-			int audioSource, int sampleRate, int channelConfig,
-			int audioFormat, boolean writeToFile) {
+			int audioSource, int sampleRate, int channelConfig, int audioFormat) {
 		aChannelConfig = channelConfig;
 
 		try {
-			if (audioFormat == AudioFormat.ENCODING_PCM_16BIT) {
-				bSamples = 16;
-			} else {
-				bSamples = 8;
-			}
-
-			if (channelConfig == AudioFormat.CHANNEL_IN_MONO) {
-				nChannels = 1;
-			} else {
-				nChannels = 2;
-			}
+			
+			bSamples = (short)((audioFormat == AudioFormat.ENCODING_PCM_16BIT) ? 16: 8);
+			nChannels = (short) ((channelConfig == AudioFormat.CHANNEL_IN_MONO) ? 1 : 2);
 
 			aSource = audioSource;
 			sRate = sampleRate;
@@ -247,10 +235,8 @@ public class RehearsalAudioRecorder {
 		if (state == State.RECORDING)
 			stop();
 
-		if (aRecorder != null) {
+		if (aRecorder != null)
 			aRecorder.release();
-			probeWriter.close();
-		}
 	}
 
 	/**
@@ -270,7 +256,6 @@ public class RehearsalAudioRecorder {
 				aRecorder.setRecordPositionUpdateListener(updateListener);
 				aRecorder.setPositionNotificationPeriod(framePeriod);
 				state = State.INITIALIZING;
-				probeWriter.connect();
 			}
 		} catch (Exception e) {
 			Log.e(TAG, e.getMessage());
@@ -313,8 +298,6 @@ public class RehearsalAudioRecorder {
 		}
 		if (state == State.RECORDING) {
 			aRecorder.stop();
-			if (probeWriter != null)
-				setActivityText("Off");
 			state = State.STOPPED;
 		} else {
 			Log.e(TAG, "stop() called on illegal state");
@@ -390,7 +373,7 @@ public class RehearsalAudioRecorder {
 
 		@Override
 		public void run() {
-			
+
 			while (true) {
 				// double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
 
@@ -398,13 +381,13 @@ public class RehearsalAudioRecorder {
 
 				/* data length is in dataSize */
 				// int dataSize = audioFromQueueData.mSize;
-			
+
 				if (audioFromQueueData.mSize < framePeriod)
 					continue;
 
 				// time = System.currentTimeMillis();
 				/* data to process is in data */
-			
+
 				data = audioFromQueueData.mData;
 
 				// sampling error
@@ -509,7 +492,7 @@ public class RehearsalAudioRecorder {
 	/**
 	 * Notifies the handler of the analytic activity of the current status
 	 */
-	public void setActivityText(final String text) {
+	public static void setActivityText(final String text) {
 
 		String prevStatus = AudioRecorderService.text;
 
