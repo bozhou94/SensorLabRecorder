@@ -64,7 +64,6 @@ public class AudioRecorderService extends Service {
 	private IncomingCallDetector mIncomingCallDetector;
 	private OutgoingCallDetector mOutgoingCallDetector;
 	private TimeChangeReceiver mTimeChangeReceiver;
-	private StressSenseProbeWriter probeWriter;
 	private NotificationManager mNotifManager;
 
 	// Blackout functionality
@@ -81,6 +80,7 @@ public class AudioRecorderService extends Service {
 												// silent
 	// Previous classification
 	public static String text = "";
+	public static StressSenseProbeWriter probeWriter;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -105,7 +105,7 @@ public class AudioRecorderService extends Service {
 
 			probeWriter = new StressSenseProbeWriter(this);
 
-			mWavAudioRecorder = new RehearsalAudioRecorder(probeWriter,
+			mWavAudioRecorder = new RehearsalAudioRecorder(
 					AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT);
 			mIncomingCallDetector = new IncomingCallDetector();

@@ -26,7 +26,7 @@ public class RehearsalAudioRecorder {
 	public enum State {
 		INITIALIZING, READY, RECORDING, ERROR, STOPPED
 	};
-	
+
 	private static final String TAG = "RehearsalAudioRecorder";
 
 	// Recorder used for uncompressed recording
@@ -63,8 +63,6 @@ public class RehearsalAudioRecorder {
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
 
-	// Used for uploading the information
-	private static StressSenseProbeWriter probeWriter;
 
 	/**
 	 * 
@@ -130,14 +128,16 @@ public class RehearsalAudioRecorder {
 	 * but the state is set to ERROR
 	 * 
 	 */
-	public RehearsalAudioRecorder(StressSenseProbeWriter probewriter,
+	public RehearsalAudioRecorder(
 			int audioSource, int sampleRate, int channelConfig, int audioFormat) {
 		aChannelConfig = channelConfig;
 
 		try {
-			
-			bSamples = (short)((audioFormat == AudioFormat.ENCODING_PCM_16BIT) ? 16: 8);
-			nChannels = (short) ((channelConfig == AudioFormat.CHANNEL_IN_MONO) ? 1 : 2);
+
+			bSamples = (short) ((audioFormat == AudioFormat.ENCODING_PCM_16BIT) ? 16
+					: 8);
+			nChannels = (short) ((channelConfig == AudioFormat.CHANNEL_IN_MONO) ? 1
+					: 2);
 
 			aSource = audioSource;
 			sRate = sampleRate;
@@ -175,8 +175,6 @@ public class RehearsalAudioRecorder {
 
 			cirBuffer = new CircularBufferFeatExtractionInference<AudioData>(
 					null, 100);
-
-			probeWriter = probewriter;
 
 		} catch (Exception e) {
 			if (e.getMessage() != null) {
@@ -503,22 +501,24 @@ public class RehearsalAudioRecorder {
 		else if (text.equals("silence"))
 			AudioRecorderService.curTotals[2]++;
 
-		if (probeWriter != null) {
+		if (AudioRecorderService.probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
 			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
 					.format(new Date()));
-			probeWriter.write(probe, text);
+			AudioRecorderService.probeWriter.write(probe, text);
 		}
-
-		Handler handler = StressActivity.getHandler();
-		if (null != handler && !prevStatus.equals(text)) {
-			Message m = new Message();
-			Bundle data = new Bundle();
-			data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-					text);
-			m.setData(data);
-			handler.sendMessage(m);
+		if (!prevStatus.equals(text)) {
 			AudioRecorderService.text = text;
+			Handler handler = StressActivity.getHandler();
+			if (null != handler) {
+				Message m = new Message();
+				Bundle data = new Bundle();
+				data.putString(
+						AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
+						text);
+				m.setData(data);
+				handler.sendMessage(m);
+			}
 		}
 	}
 }
