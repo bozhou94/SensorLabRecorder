@@ -65,12 +65,24 @@
             android:drawableTop="@drawable/img_mobility_run" />
     </LinearLayout>
     
-	<!--
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:shadowColor="#e8e8e8"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="1"
+        android:text="Graphical Summary:" />
+    
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dip"
+        android:background="#89b8db" />
+    
     <LinearLayout
         android:id="@+id/chart"
         android:layout_width="fill_parent"
-        android:layout_height="0dip"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="horizontal" />
-	-->
 </LinearLayout>

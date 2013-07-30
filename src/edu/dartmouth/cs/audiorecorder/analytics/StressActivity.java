@@ -1,5 +1,15 @@
 package edu.dartmouth.cs.audiorecorder.analytics;
 
+import java.text.DecimalFormat;
+
+import org.achartengine.ChartFactory;
+import org.achartengine.GraphicalView;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.model.XYSeries;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
+import org.achartengine.renderer.XYSeriesRenderer;
+
 import edu.dartmouth.cs.audiorecorder.AudioRecorderService;
 import edu.dartmouth.cs.audiorecorder.R;
 import edu.dartmouth.cs.audiorecorder.SensorPreferenceActivity;
@@ -15,9 +25,12 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * This is the analytic portion of StressSense.
@@ -40,6 +53,13 @@ public class StressActivity extends Activity {
 	// BroadcastReceiver for getting On/Off signals from the service
 	private AudioRecorderStatusRecevier mAudioRecorderStatusReceiver;
 	private SamplePercentageReceiver mSampleReceiver;
+	
+	// Used for charts
+	private GraphicalView mChartView;
+	private XYMultipleSeriesRenderer mRenderer = new XYMultipleSeriesRenderer();
+	private XYMultipleSeriesDataset mDataset = new XYMultipleSeriesDataset();
+	private XYSeries mCurrentSeries;
+	private XYSeriesRenderer mCurrentRenderer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +84,31 @@ public class StressActivity extends Activity {
 		mStressed = (TextView) findViewById(R.id.recent_stress_stress);
 		mNStressed = (TextView) findViewById(R.id.recent_stress_not);
 		mSilence = (TextView) findViewById(R.id.recent_stress_none);
+		
+		//Graph rendering
+		mRenderer.setAxisTitleTextSize(16);
+	    mRenderer.setChartTitleTextSize(20);
+	    mRenderer.setLabelsTextSize(15);
+	    mRenderer.setShowLegend(false);
+	    mRenderer.setMargins(new int[] { 20, 0, 10, 0 });
+	    mRenderer.setPointSize(5);
+	    
+	    String seriesTitle = "";
+        // create a new series of data
+        XYSeries series = new XYSeries(seriesTitle);
+        mDataset.addSeries(series);
+        mCurrentSeries = series;
+        
+        // create a new renderer for the new series
+        XYSeriesRenderer renderer = new XYSeriesRenderer();
+        mRenderer.addSeriesRenderer(renderer);
+      
+        // set some renderer properties
+        renderer.setPointStyle(PointStyle.CIRCLE);
+        renderer.setFillPoints(true);
+        renderer.setDisplayChartValues(true);
+        renderer.setDisplayChartValuesDistance(10);
+        mCurrentRenderer = renderer;
 	}
 
 	@Override
@@ -82,6 +127,19 @@ public class StressActivity extends Activity {
 					R.drawable.mic_on, 0, 0, 0);
 		calculatePercentages();
 	}
+	
+	@Override
+	  protected void onResume() {
+	    super.onResume();
+	    if (mChartView == null) {
+	      LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
+	      mChartView = ChartFactory.getLineChartView(this, mDataset, mRenderer);
+	      layout.addView(mChartView, new LayoutParams(LayoutParams.WRAP_CONTENT,
+	          LayoutParams.WRAP_CONTENT));
+	    } else {
+	      mChartView.repaint();
+	    }
+	  }
 
 	@Override
 	public void onStop() {
@@ -91,7 +149,7 @@ public class StressActivity extends Activity {
 		sMessageHandler = null;
 		mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 				R.drawable.mic_off, 0, 0, 0);
-		mTvGenericText.setText("");
+		mTvGenericText.setText(AudioRecorderService.text);
 	}
 
 	/**
@@ -106,9 +164,9 @@ public class StressActivity extends Activity {
 				.getInt(AudioRecorderService.PERCENT_SILENT, 0);
 		int total = numSSamples + numNSamples + numSiSamples;
 		if (total > 0) {
-			mStressed.setText(100.0 * numSSamples / total + "%");
-			mNStressed.setText(100.0 * numNSamples / total + "%");
-			mSilence.setText(100.0 * numSiSamples / total + "%");
+			mStressed.setText(new DecimalFormat("#.##").format(100.0 * numSSamples / total) + "%");
+			mNStressed.setText(new DecimalFormat("#.##").format(100.0 * numNSamples / total) + "%");
+			mSilence.setText(new DecimalFormat("#.##").format(100.0 * numSiSamples / total) + "%");
 			mTimeText.setText("Hourly Summary: " + PreferenceManager.getDefaultSharedPreferences(this)
 					.getString(AudioRecorderService.PERCENTAGE_PREV_KEY, "") + " to "  + PreferenceManager.getDefaultSharedPreferences(this)
 					.getString(AudioRecorderService.PERCENTAGE_KEY, ""));
@@ -133,7 +191,7 @@ public class StressActivity extends Activity {
 					AudioRecorderService.AUDIORECORDER_OFF)) {
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_off, 0, 0, 0);
-				mTvGenericText.setText("");
+				mTvGenericText.setText(AudioRecorderService.text);
 			}
 		}
 	}

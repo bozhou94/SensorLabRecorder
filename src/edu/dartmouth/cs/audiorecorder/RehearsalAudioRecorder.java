@@ -69,10 +69,6 @@ public class RehearsalAudioRecorder {
 	// Used for uploading the information
 	private static StressSenseProbeWriter probeWriter;
 
-	// Used for analytics
-	private String prevTime;
-	private String prevStatus;
-
 	/**
 	 * 
 	 * Returns the state of the recorder in a RehearsalAudioRecord.State typed
@@ -115,10 +111,10 @@ public class RehearsalAudioRecorder {
 	 * Method used for recording.
 	 */
 	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
+		
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			new AudioReadingTask().execute(); // previously contents of
-												// AudioReadingTask were here
+			new AudioReadingTask().execute();
 		}
 
 		@Override
@@ -189,13 +185,6 @@ public class RehearsalAudioRecorder {
 								+ Integer.toString(bufferSize));
 			}
 
-			aRecorder = new AudioRecord(audioSource, sampleRate, channelConfig,
-					audioFormat, bufferSize);
-			if (aRecorder.getState() != AudioRecord.STATE_INITIALIZED)
-				throw new Exception("AudioRecord initialization failed");
-			aRecorder.setRecordPositionUpdateListener(updateListener);
-			aRecorder.setPositionNotificationPeriod(framePeriod);
-			state = State.INITIALIZING;
 			cirBuffer = new CircularBufferFeatExtractionInference<AudioData>(
 					null, 100);
 
@@ -258,8 +247,10 @@ public class RehearsalAudioRecorder {
 		if (state == State.RECORDING)
 			stop();
 
-		if (aRecorder != null)
+		if (aRecorder != null) {
 			aRecorder.release();
+			probeWriter.close();
+		}
 	}
 
 	/**
@@ -279,6 +270,7 @@ public class RehearsalAudioRecorder {
 				aRecorder.setRecordPositionUpdateListener(updateListener);
 				aRecorder.setPositionNotificationPeriod(framePeriod);
 				state = State.INITIALIZING;
+				probeWriter.connect();
 			}
 		} catch (Exception e) {
 			Log.e(TAG, e.getMessage());
@@ -321,6 +313,8 @@ public class RehearsalAudioRecorder {
 		}
 		if (state == State.RECORDING) {
 			aRecorder.stop();
+			if (probeWriter != null)
+				setActivityText("Off");
 			state = State.STOPPED;
 		} else {
 			Log.e(TAG, "stop() called on illegal state");
@@ -396,6 +390,7 @@ public class RehearsalAudioRecorder {
 
 		@Override
 		public void run() {
+			
 			while (true) {
 				// double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
 
@@ -403,11 +398,13 @@ public class RehearsalAudioRecorder {
 
 				/* data length is in dataSize */
 				// int dataSize = audioFromQueueData.mSize;
+			
 				if (audioFromQueueData.mSize < framePeriod)
 					continue;
 
 				// time = System.currentTimeMillis();
 				/* data to process is in data */
+			
 				data = audioFromQueueData.mData;
 
 				// sampling error
@@ -436,24 +433,6 @@ public class RehearsalAudioRecorder {
 				for (int i = 0; i < row; i++)
 					// {
 					System.arraycopy(data, i * col, data_buffer[i], 0, col);
-				/*
-				 * rms[i] = features.rms(data_buffer[i]); zcr[i] =
-				 * features.zcr(data_buffer[i]); }
-				 * 
-				 * zcr_m = features.mean(zcr); zcr_v = features.var(zcr, zcr_m);
-				 * rms_m = features.mean(rms); rms_s =
-				 * Math.sqrt(features.var(rms, rms_m)) / rms_m;
-				 * 
-				 * rms_threshold = rms_m * 0.5;
-				 * 
-				 * lefr = 0;
-				 * 
-				 * for (double i : rms) { if (i < rms_threshold) lefr++; } if
-				 * (AudioInference.tree(zcr_v, zcr_m, rms_s, lefr) == 0) { //
-				 * setActivityText("noise"); time2 = System.currentTimeMillis();
-				 * Log.d(TAG, "noise" + "time " + (time2 - time1) / 1000); //
-				 * continue; }
-				 */
 
 				fdata[0] = data[0];
 				for (int i = 1; i < framePeriod; i++) {
@@ -530,7 +509,9 @@ public class RehearsalAudioRecorder {
 	/**
 	 * Notifies the handler of the analytic activity of the current status
 	 */
-	public synchronized void setActivityText(final String text) {
+	public void setActivityText(final String text) {
+
+		String prevStatus = AudioRecorderService.text;
 
 		if (text.equals("stressed"))
 			AudioRecorderService.curTotals[0]++;
@@ -546,36 +527,15 @@ public class RehearsalAudioRecorder {
 			probeWriter.write(probe, text);
 		}
 
-		String curTime = new SimpleDateFormat("h:mm a").format(Calendar
-				.getInstance().getTime());
-		if (prevTime == null || !prevTime.equals(curTime)) {
-			AudioRecorderService.changeHistory.addFirst(curTime + ": " + text);
-			if (AudioRecorderService.changeHistory.size() > 10)
-				AudioRecorderService.changeHistory.removeLast();
-			prevTime = curTime;
-			Handler handler = AnalyticHistory.getHandler();
-			if (null != handler) {
-				Message m = new Message();
-				Bundle data = new Bundle();
-				data.putString(
-						AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-						text);
-				m.setData(data);
-				handler.sendMessage(m);
-			}
-		}
-
-		else if (prevStatus == null || !prevStatus.equals(text)) {
-			Handler handler = StressActivity.getHandler();
-			if (null != handler) {
-				Message m = new Message();
-				Bundle data = new Bundle();
-				data.putString(
-						AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-						text);
-				m.setData(data);
-				handler.sendMessage(m);
-			}
+		Handler handler = StressActivity.getHandler();
+		if (null != handler && !prevStatus.equals(text)) {
+			Message m = new Message();
+			Bundle data = new Bundle();
+			data.putString(AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
+					text);
+			m.setData(data);
+			handler.sendMessage(m);
+			AudioRecorderService.text = text;
 		}
 	}
 }
