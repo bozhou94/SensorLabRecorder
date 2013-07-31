@@ -12,13 +12,11 @@ public class StressSenseProbeWriter extends ProbeWriter {
 	private static final int OBSERVER_VERSION = 2013081703;
 	private static final String STREAM_SIMPLE = "stresssense";
     private static final int STREAM_SIMPLE_VERSION = 2013072400;
-
 	public StressSenseProbeWriter(Context context) {
 		super(context);
 	}
 
 	public void write(ProbeBuilder probe, String mode /*, short[] audio*/) {
-
 		try {
 			probe.setObserver(OBSERVER_ID, OBSERVER_VERSION);
 			probe.setStream(STREAM_SIMPLE, STREAM_SIMPLE_VERSION);
