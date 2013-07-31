@@ -108,14 +108,15 @@ public class RehearsalAudioRecorderLite {
 	 */
 	private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
 
-		private AudioReadingTask[] tasks = new AudioReadingTask[5];
-		private int count;
+		// private AudioReadingTask[] tasks = new AudioReadingTask[5];
+		// private int count;
 		
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			if (tasks[count] == null || tasks[count].getStatus() == AsyncTask.Status.FINISHED)
-				(tasks[count] = new AudioReadingTask()).execute();
-			count = (count == 4) ? 0 : count + 1;
+			//if (tasks[count] == null || tasks[count].getStatus() == AsyncTask.Status.FINISHED)
+				//(tasks[count] = new AudioReadingTask()).execute();
+			//count = (count == 4) ? 0 : count + 1;
+			new AudioReadingTask().execute();
 		}
 
 		@Override
