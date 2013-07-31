@@ -82,6 +82,7 @@
         <activity android:name="org.ohmage.mobility.blackout.BlackoutEditActivity" />
 
         <service android:name=".AudioRecorderService" />
+        <service android:name=".lite.AudioRecorderServiceLite" />
         <service android:name="org.ohmage.mobility.blackout.BlackoutService" />
  
         <receiver android:name="org.ohmage.mobility.blackout.BlackoutService$AlarmReceiver" >

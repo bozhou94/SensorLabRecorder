@@ -12,6 +12,11 @@
             android:key="pref_loc"
             android:title="Enable location services" />
          -->
+         <CheckBoxPreference
+            android:key="analytic_onoff"
+            android:summary="Analytics are currently disabled"
+            android:summaryOn="Analytics are currently enabled"
+            android:title="Analytics" />
         <Preference
             android:summary="Tap here to set blackout times"
             android:title="Blackout times"

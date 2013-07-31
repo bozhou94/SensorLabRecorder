@@ -117,7 +117,7 @@ containing a value of this type.
         public static final int wordlogo=0x7f020021;
     }
     public static final class id {
-        public static final int LinearLayout01=0x7f090001;
+        public static final int LinearLayout01=0x7f090002;
         public static final int accel_text=0x7f09000b;
         public static final int add_new_label=0x7f090015;
         public static final int audio_text=0x7f09000c;
@@ -148,41 +148,45 @@ containing a value of this type.
         public static final int text_input_negative=0x7f090022;
         public static final int text_input_postive=0x7f090021;
         public static final int time=0x7f090005;
-        public static final int trig_edit_cancel=0x7f090003;
-        public static final int trig_edit_done=0x7f090002;
-        public static final int tvStatus=0x7f090004;
+        public static final int trig_edit_cancel=0x7f090004;
+        public static final int trig_edit_done=0x7f090003;
+        public static final int tvStatus=0x7f090001;
         public static final int url_upload_status=0x7f090013;
         public static final int wifi_status=0x7f090012;
     }
     public static final class layout {
         public static final int analytic_history=0x7f030000;
-        public static final int blackout_editor=0x7f030001;
-        public static final int main_analytic=0x7f030002;
-        public static final int notification_layout=0x7f030003;
-        public static final int pam=0x7f030004;
-        public static final int status=0x7f030005;
-        public static final int trigger_add_new=0x7f030006;
-        public static final int trigger_main_list=0x7f030007;
-        public static final int trigger_main_list_row=0x7f030008;
-        public static final int trigger_notif_edit_repeat_row=0x7f030009;
-        public static final int trigger_notif_editor=0x7f03000a;
-        public static final int trigger_text_input=0x7f03000b;
-        public static final int trigger_two_line_list_item=0x7f03000c;
+        public static final int analytic_off=0x7f030001;
+        public static final int blackout_editor=0x7f030002;
+        public static final int main_analytic=0x7f030003;
+        public static final int notification_layout=0x7f030004;
+        public static final int pam=0x7f030005;
+        public static final int status=0x7f030006;
+        public static final int trigger_add_new=0x7f030007;
+        public static final int trigger_main_list=0x7f030008;
+        public static final int trigger_main_list_row=0x7f030009;
+        public static final int trigger_notif_edit_repeat_row=0x7f03000a;
+        public static final int trigger_notif_editor=0x7f03000b;
+        public static final int trigger_text_input=0x7f03000c;
+        public static final int trigger_two_line_list_item=0x7f03000d;
     }
     public static final class string {
         public static final int app_name=0x7f050000;
-        public static final int audiorecording_service_started=0x7f050003;
-        public static final int audiorecording_service_stopped=0x7f050004;
-        public static final int blackout=0x7f050007;
+        public static final int audiorecording_lite_service_started=0x7f050005;
+        public static final int audiorecording_lite_service_stopped=0x7f050007;
+        public static final int audiorecording_service_started=0x7f050004;
+        public static final int audiorecording_service_stopped=0x7f050006;
+        public static final int blackout=0x7f05000a;
+        public static final int foreground_lite_service_started=0x7f050003;
         public static final int foreground_service_started=0x7f050002;
         public static final int hello=0x7f050001;
-        public static final int local_service_label=0x7f050005;
-        public static final int service_status=0x7f050006;
-        public static final int stresssense_market_btn_label=0x7f050009;
-        public static final int stresssense_market_link=0x7f05000a;
+        public static final int local_service_label=0x7f050008;
+        public static final int service_status=0x7f050009;
+        public static final int stresssense_market_btn_label=0x7f05000c;
+        public static final int stresssense_market_link=0x7f05000d;
         /**   StressSense 
          */
-        public static final int stresssense_missing_desc=0x7f050008;
+        public static final int stresssense_missing_desc=0x7f05000b;
     }
     public static final class style {
         public static final int AppTheme=0x7f060000;

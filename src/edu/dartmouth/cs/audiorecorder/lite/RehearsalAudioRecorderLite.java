@@ -1,4 +1,4 @@
-package edu.dartmouth.cs.audiorecorder;
+package edu.dartmouth.cs.audiorecorder.lite;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -14,10 +14,11 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import edu.dartmouth.cs.audiorecorder.CircularBufferFeatExtractionInference;
 import edu.dartmouth.cs.audiorecorder.analytics.StressActivity;
 import edu.dartmouth.cs.mltoolkit.processing.*;
 
-public class RehearsalAudioRecorder {
+public class RehearsalAudioRecorderLite {
 	/**
 	 * INITIALIZING : recorder is initializing; READY : recorder has been
 	 * initialized, recorder not yet started RECORDING : recording ERROR :
@@ -133,7 +134,7 @@ public class RehearsalAudioRecorder {
 	 * but the state is set to ERROR
 	 * 
 	 */
-	public RehearsalAudioRecorder(
+	public RehearsalAudioRecorderLite(
 			int audioSource, int sampleRate, int channelConfig, int audioFormat) {
 		aChannelConfig = channelConfig;
 
@@ -497,33 +498,11 @@ public class RehearsalAudioRecorder {
 	 */
 	public static void setActivityText(final String text) {
 
-		String prevStatus = AudioRecorderService.text;
-
-		if (text.equals("stressed"))
-			AudioRecorderService.curTotals[0]++;
-		else if (text.equals("not stressed"))
-			AudioRecorderService.curTotals[1]++;
-		else if (text.equals("silence"))
-			AudioRecorderService.curTotals[2]++;
-
-		if (AudioRecorderService.probeWriter != null) {
+		if (AudioRecorderServiceLite.probeWriter != null) {
 			ProbeBuilder probe = new ProbeBuilder();
 			probe.withTimestamp(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
 					.format(new Date()));
-			AudioRecorderService.probeWriter.write(probe, text);
-		}
-		if (!prevStatus.equals(text)) {
-			AudioRecorderService.text = text;
-			Handler handler = StressActivity.getHandler();
-			if (null != handler) {
-				Message m = new Message();
-				Bundle data = new Bundle();
-				data.putString(
-						AudioRecorderService.AUDIORECORDER_NEWTEXT_CONTENT,
-						text);
-				m.setData(data);
-				handler.sendMessage(m);
-			}
+			AudioRecorderServiceLite.probeWriter.write(probe, text);
 		}
 	}
 }

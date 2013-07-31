@@ -53,7 +53,7 @@ public class StressActivity extends Activity {
 	// BroadcastReceiver for getting On/Off signals from the service
 	private AudioRecorderStatusRecevier mAudioRecorderStatusReceiver;
 	private SamplePercentageReceiver mSampleReceiver;
-	
+
 	// Used for charts
 	private GraphicalView mChartView;
 	private XYMultipleSeriesRenderer mRenderer = new XYMultipleSeriesRenderer();
@@ -64,92 +64,68 @@ public class StressActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main_analytic);
 
-		mAudioRecorderStatusReceiver = new AudioRecorderStatusRecevier();
-		mSampleReceiver = new SamplePercentageReceiver();
-
-		mTvGenericText = (TextView) findViewById(R.id.tvStatus);
-		mTimeText = (TextView) findViewById(R.id.time);
-		mTvGenericText.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				Intent intent = new Intent(StressActivity.this, AnalyticHistory.class);
-				startActivity(intent);
-			}
-			
-		});
-		
-		mStressed = (TextView) findViewById(R.id.recent_stress_stress);
-		mNStressed = (TextView) findViewById(R.id.recent_stress_not);
-		mSilence = (TextView) findViewById(R.id.recent_stress_none);
-		
-		//Graph rendering
-		mRenderer.setAxisTitleTextSize(16);
-	    mRenderer.setChartTitleTextSize(20);
-	    mRenderer.setLabelsTextSize(15);
-	    mRenderer.setShowLegend(false);
-	    mRenderer.setMargins(new int[] { 20, 0, 10, 0 });
-	    mRenderer.setPointSize(5);
-	    
-	    String seriesTitle = "";
-        // create a new series of data
-        XYSeries series = new XYSeries(seriesTitle);
-        mDataset.addSeries(series);
-        mCurrentSeries = series;
-        
-        // create a new renderer for the new series
-        XYSeriesRenderer renderer = new XYSeriesRenderer();
-        mRenderer.addSeriesRenderer(renderer);
-      
-        // set some renderer properties
-        renderer.setPointStyle(PointStyle.CIRCLE);
-        renderer.setFillPoints(true);
-        renderer.setDisplayChartValues(true);
-        renderer.setDisplayChartValuesDistance(10);
-        mCurrentRenderer = renderer;
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				SensorPreferenceActivity.ANALYTIC_ON, false)) {
+			setupMainView();
+		} else 
+			setContentView(R.layout.analytic_off);
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
-		registerReceiver(mAudioRecorderStatusReceiver, new IntentFilter(
-				AudioRecorderService.AUDIORECORDER_ON));
-		registerReceiver(mAudioRecorderStatusReceiver, new IntentFilter(
-				AudioRecorderService.AUDIORECORDER_OFF));
-		registerReceiver(mSampleReceiver, new IntentFilter(
-				AudioRecorderService.CALCULATE_PERCENTAGE));
-		sMessageHandler = mHandler;
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-				SensorPreferenceActivity.IS_ON, false))
-			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
-					R.drawable.mic_on, 0, 0, 0);
-		calculatePercentages();
+				SensorPreferenceActivity.ANALYTIC_ON, false)) {
+			setupMainView();
+			registerReceiver(mAudioRecorderStatusReceiver, new IntentFilter(
+					AudioRecorderService.AUDIORECORDER_ON));
+			registerReceiver(mAudioRecorderStatusReceiver, new IntentFilter(
+					AudioRecorderService.AUDIORECORDER_OFF));
+			registerReceiver(mSampleReceiver, new IntentFilter(
+					AudioRecorderService.CALCULATE_PERCENTAGE));
+			sMessageHandler = mHandler;
+			if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+					SensorPreferenceActivity.IS_ON, false)) {
+				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
+						R.drawable.mic_on, 0, 0, 0);
+				mTvGenericText.setText(AudioRecorderService.text);
+			}
+			calculatePercentages();
+		} else 
+			setContentView(R.layout.analytic_off);
 	}
+
 	
 	@Override
-	  protected void onResume() {
-	    super.onResume();
-	    if (mChartView == null) {
-	      LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
-	      mChartView = ChartFactory.getLineChartView(this, mDataset, mRenderer);
-	      layout.addView(mChartView, new LayoutParams(LayoutParams.WRAP_CONTENT,
-	          LayoutParams.WRAP_CONTENT));
-	    } else {
-	      mChartView.repaint();
-	    }
-	  }
+	protected void onResume() {
+		super.onResume();
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				SensorPreferenceActivity.ANALYTIC_ON, false)) {
+			if (mChartView == null) {
+				LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
+				mChartView = ChartFactory.getLineChartView(this, mDataset,
+						mRenderer);
+				layout.addView(mChartView, new LayoutParams(
+						LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+			} else {
+				mChartView.repaint();
+			}
+		}
+	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
-		unregisterReceiver(mAudioRecorderStatusReceiver);
-		unregisterReceiver(mSampleReceiver);
-		sMessageHandler = null;
-		mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
-				R.drawable.mic_off, 0, 0, 0);
-		mTvGenericText.setText(AudioRecorderService.text);
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				SensorPreferenceActivity.ANALYTIC_ON, false)) {
+			unregisterReceiver(mAudioRecorderStatusReceiver);
+			unregisterReceiver(mSampleReceiver);
+			sMessageHandler = null;
+			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
+					R.drawable.mic_off, 0, 0, 0);
+			mTvGenericText.setText("");
+		}
 	}
 
 	/**
@@ -164,13 +140,75 @@ public class StressActivity extends Activity {
 				.getInt(AudioRecorderService.PERCENT_SILENT, 0);
 		int total = numSSamples + numNSamples + numSiSamples;
 		if (total > 0) {
-			mStressed.setText(new DecimalFormat("#.##").format(100.0 * numSSamples / total) + "%");
-			mNStressed.setText(new DecimalFormat("#.##").format(100.0 * numNSamples / total) + "%");
-			mSilence.setText(new DecimalFormat("#.##").format(100.0 * numSiSamples / total) + "%");
-			mTimeText.setText("Hourly Summary: " + PreferenceManager.getDefaultSharedPreferences(this)
-					.getString(AudioRecorderService.PERCENTAGE_PREV_KEY, "") + " to "  + PreferenceManager.getDefaultSharedPreferences(this)
-					.getString(AudioRecorderService.PERCENTAGE_KEY, ""));
+			mStressed.setText(new DecimalFormat("#.##").format(100.0
+					* numSSamples / total)
+					+ "%");
+			mNStressed.setText(new DecimalFormat("#.##").format(100.0
+					* numNSamples / total)
+					+ "%");
+			mSilence.setText(new DecimalFormat("#.##").format(100.0
+					* numSiSamples / total)
+					+ "%");
+			mTimeText
+					.setText("Hourly Summary: "
+							+ PreferenceManager.getDefaultSharedPreferences(
+									this).getString(
+									AudioRecorderService.PERCENTAGE_PREV_KEY,
+									"")
+							+ " to "
+							+ PreferenceManager.getDefaultSharedPreferences(
+									this).getString(
+									AudioRecorderService.PERCENTAGE_KEY, ""));
 		}
+	}
+	
+	private void setupMainView() {
+		setContentView(R.layout.main_analytic);
+
+		mAudioRecorderStatusReceiver = new AudioRecorderStatusRecevier();
+		mSampleReceiver = new SamplePercentageReceiver();
+
+		mTvGenericText = (TextView) findViewById(R.id.tvStatus);
+		mTimeText = (TextView) findViewById(R.id.time);
+		mTvGenericText.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				Intent intent = new Intent(StressActivity.this,
+						AnalyticHistory.class);
+				startActivity(intent);
+			}
+
+		});
+
+		mStressed = (TextView) findViewById(R.id.recent_stress_stress);
+		mNStressed = (TextView) findViewById(R.id.recent_stress_not);
+		mSilence = (TextView) findViewById(R.id.recent_stress_none);
+
+		// Graph rendering
+		mRenderer.setAxisTitleTextSize(16);
+		mRenderer.setChartTitleTextSize(20);
+		mRenderer.setLabelsTextSize(15);
+		mRenderer.setShowLegend(false);
+		mRenderer.setMargins(new int[] { 20, 0, 10, 0 });
+		mRenderer.setPointSize(5);
+
+		String seriesTitle = "";
+		// create a new series of data
+		XYSeries series = new XYSeries(seriesTitle);
+		mDataset.addSeries(series);
+		mCurrentSeries = series;
+
+		// create a new renderer for the new series
+		XYSeriesRenderer renderer = new XYSeriesRenderer();
+		mRenderer.addSeriesRenderer(renderer);
+
+		// set some renderer properties
+		renderer.setPointStyle(PointStyle.CIRCLE);
+		renderer.setFillPoints(true);
+		renderer.setDisplayChartValues(true);
+		renderer.setDisplayChartValuesDistance(10);
+		mCurrentRenderer = renderer;
 	}
 
 	/*--------------------------------BROADCASTRECEIVERS--------------------------------*/
@@ -187,11 +225,12 @@ public class StressActivity extends Activity {
 					.equals(AudioRecorderService.AUDIORECORDER_ON)) {
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_on, 0, 0, 0);
+				mTvGenericText.setText(AudioRecorderService.text);
 			} else if (intent.getAction().equals(
 					AudioRecorderService.AUDIORECORDER_OFF)) {
 				mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 						R.drawable.mic_off, 0, 0, 0);
-				mTvGenericText.setText(AudioRecorderService.text);
+				mTvGenericText.setText("");
 			}
 		}
 	}
