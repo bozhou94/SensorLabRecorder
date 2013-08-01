@@ -51,8 +51,10 @@ public class AudioRecorderService extends Service {
 
 	private static final String TAG = "AudioRecorderService";
 	public static final String CALCULATE_PERCENTAGE = "edu.dartmouth.cs.audiorecorder.AudioRecorder.action.CALCULATE";
+	public static final String DRAW_GRAPH = "edu.dartmouth.cs.audiorecorder.AudioRecorder.action.DRAW";
 	public static final String PERCENTAGE_KEY = "per_key";
 	public static final String PERCENTAGE_PREV_KEY = "per_prev_key";
+	public static final String TOTAL_STRESS_KEY = "tot_stress_key";
 	public static final String PERCENT_STRESSED = "per_stressed";
 	public static final String PERCENT_NSTRESSED = "per_nstressed";
 	public static final String PERCENT_SILENT = "per_silent";
@@ -78,6 +80,9 @@ public class AudioRecorderService extends Service {
 	public static LinkedList<String> changeHistory = new LinkedList<String>();
 	public static int[] curTotals = new int[3]; // Stressed, not stressed,
 												// silent
+	public static String stressTotals = ""; // lists the total of stress moments
+											// per hour, separated by commas
+
 	// Previous classification
 	public static String text = "";
 	public static StressSenseProbeWriter probeWriter;
@@ -105,8 +110,8 @@ public class AudioRecorderService extends Service {
 
 			probeWriter = new StressSenseProbeWriter(this);
 
-			mWavAudioRecorder = new RehearsalAudioRecorder(
-					AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
+			mWavAudioRecorder = new RehearsalAudioRecorder(AudioSource.MIC,
+					8000, AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT);
 			mIncomingCallDetector = new IncomingCallDetector();
 			mOutgoingCallDetector = new OutgoingCallDetector();
@@ -187,20 +192,6 @@ public class AudioRecorderService extends Service {
 		c.close();
 		db.close();
 		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
-	}
-
-	/**
-	 * Saves the daily total values
-	 */
-	private void saveSampleTotals(String time, String prevTime) {
-		Editor editor = PreferenceManager.getDefaultSharedPreferences(this)
-				.edit();
-		editor.putInt(PERCENT_STRESSED, curTotals[0]);
-		editor.putInt(PERCENT_NSTRESSED, curTotals[1]);
-		editor.putInt(PERCENT_SILENT, curTotals[2]);
-		editor.putString(PERCENTAGE_KEY, time);
-		editor.putString(PERCENTAGE_PREV_KEY, prevTime);
-		editor.commit();
 	}
 
 	@Override
@@ -331,13 +322,33 @@ public class AudioRecorderService extends Service {
 				handler.sendMessage(m);
 			}
 
+			if (curTime.equals("12:00 AM")) {
+				Editor editor = PreferenceManager.getDefaultSharedPreferences(
+						AudioRecorderService.this).edit();
+				editor.putString(TOTAL_STRESS_KEY, stressTotals);
+				editor.commit();
+				Intent i = new Intent();
+				i.setAction(DRAW_GRAPH);
+				sendBroadcast(i);
+				stressTotals = "";
+
+			}
+			
 			if (curTime.substring(3, 5).equals("00")
 					|| curTime.substring(2, 4).equals("00")) {
-				saveSampleTotals(curTime, prevTime);
+				Editor editor = PreferenceManager.getDefaultSharedPreferences(
+						AudioRecorderService.this).edit();
+				editor.putInt(PERCENT_STRESSED, curTotals[0]);
+				editor.putInt(PERCENT_NSTRESSED, curTotals[1]);
+				editor.putInt(PERCENT_SILENT, curTotals[2]);
+				editor.putString(PERCENTAGE_KEY, curTime);
+				editor.putString(PERCENTAGE_PREV_KEY, prevTime);
+				editor.commit();
 				Intent i = new Intent();
 				i.setAction(CALCULATE_PERCENTAGE);
 				sendBroadcast(i);
 				prevTime = curTime;
+				stressTotals += curTime + "%" + curTotals[0] + ",";
 				curTotals = new int[3];
 			}
 		}

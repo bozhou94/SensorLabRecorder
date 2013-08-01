@@ -53,6 +53,7 @@ public class StressActivity extends Activity {
 	// BroadcastReceiver for getting On/Off signals from the service
 	private AudioRecorderStatusRecevier mAudioRecorderStatusReceiver;
 	private SamplePercentageReceiver mSampleReceiver;
+	private StressTotalReceiver mGraphReceiver;
 
 	// Used for charts
 	private GraphicalView mChartView;
@@ -68,7 +69,7 @@ public class StressActivity extends Activity {
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
 				SensorPreferenceActivity.ANALYTIC_ON, false)) {
 			setupMainView();
-		} else 
+		} else
 			setContentView(R.layout.analytic_off);
 	}
 
@@ -84,6 +85,8 @@ public class StressActivity extends Activity {
 					AudioRecorderService.AUDIORECORDER_OFF));
 			registerReceiver(mSampleReceiver, new IntentFilter(
 					AudioRecorderService.CALCULATE_PERCENTAGE));
+			registerReceiver(mGraphReceiver, new IntentFilter(
+					AudioRecorderService.DRAW_GRAPH));
 			sMessageHandler = mHandler;
 			if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
 					SensorPreferenceActivity.IS_ON, false)) {
@@ -92,25 +95,21 @@ public class StressActivity extends Activity {
 				mTvGenericText.setText(AudioRecorderService.text);
 			}
 			calculatePercentages();
-		} else 
+		} else
 			setContentView(R.layout.analytic_off);
 	}
 
-	
 	@Override
 	protected void onResume() {
 		super.onResume();
 		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
 				SensorPreferenceActivity.ANALYTIC_ON, false)) {
-			if (mChartView == null) {
-				LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
-				mChartView = ChartFactory.getLineChartView(this, mDataset,
-						mRenderer);
-				layout.addView(mChartView, new LayoutParams(
-						LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-			} else {
-				mChartView.repaint();
-			}
+			LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
+			mChartView = ChartFactory.getLineChartView(this, mDataset,
+					mRenderer);
+			layout.addView(mChartView, new LayoutParams(
+					LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+			redrawGraph();
 		}
 	}
 
@@ -121,6 +120,7 @@ public class StressActivity extends Activity {
 				SensorPreferenceActivity.ANALYTIC_ON, false)) {
 			unregisterReceiver(mAudioRecorderStatusReceiver);
 			unregisterReceiver(mSampleReceiver);
+			unregisterReceiver(mGraphReceiver);
 			sMessageHandler = null;
 			mTvGenericText.setCompoundDrawablesWithIntrinsicBounds(
 					R.drawable.mic_off, 0, 0, 0);
@@ -161,12 +161,41 @@ public class StressActivity extends Activity {
 									AudioRecorderService.PERCENTAGE_KEY, ""));
 		}
 	}
-	
+
+	/**
+	 * Draws the graph to reflect the values recorded throughout the day
+	 */
+	private void redrawGraph() {
+		String[] values = PreferenceManager.getDefaultSharedPreferences(this)
+				.getString(AudioRecorderService.TOTAL_STRESS_KEY, "")
+				.split(",");
+		if (values.length > 1) {
+			int[] tvalues = new int[24];
+			for (String i : values) {
+				String[] tvalue = i.split("%");
+				int hour = 0;
+				if (!tvalue[0].equals("12:00 AM"))
+					// Convert the listed time into a numeric value
+					hour = Integer.parseInt(tvalue[0].split(":")[0])
+							+ (tvalue[0].split(" ")[1].equals("AM") ? 0 : 12);
+				tvalues[hour] = Integer.parseInt(tvalue[1]);
+			}
+
+			for (int i = 0; i < 24; i++)
+				mCurrentSeries.add(i, tvalues[i]);
+			mChartView.repaint();
+		}
+	}
+
+	/**
+	 * Sets up the UI for the analytic activity
+	 */
 	private void setupMainView() {
 		setContentView(R.layout.main_analytic);
 
 		mAudioRecorderStatusReceiver = new AudioRecorderStatusRecevier();
 		mSampleReceiver = new SamplePercentageReceiver();
+		mGraphReceiver = new StressTotalReceiver();
 
 		mTvGenericText = (TextView) findViewById(R.id.tvStatus);
 		mTimeText = (TextView) findViewById(R.id.time);
@@ -190,7 +219,7 @@ public class StressActivity extends Activity {
 		mRenderer.setChartTitleTextSize(20);
 		mRenderer.setLabelsTextSize(15);
 		mRenderer.setShowLegend(false);
-		mRenderer.setMargins(new int[] { 20, 0, 10, 0 });
+		mRenderer.setMargins(new int[] { 20, 15, 10, 0 });
 		mRenderer.setPointSize(5);
 
 		String seriesTitle = "";
@@ -236,7 +265,7 @@ public class StressActivity extends Activity {
 	}
 
 	/**
-	 * Listens for when the percentages are renewed daily
+	 * Listens for when the percentages are renewed hourly
 	 */
 	class SamplePercentageReceiver extends BroadcastReceiver {
 
@@ -245,6 +274,18 @@ public class StressActivity extends Activity {
 			if (intent.getAction().equals(
 					AudioRecorderService.CALCULATE_PERCENTAGE))
 				calculatePercentages();
+		}
+	}
+
+	/**
+	 * Listens for when the stress totals are renewed daily
+	 */
+	class StressTotalReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(AudioRecorderService.DRAW_GRAPH))
+				redrawGraph();
 		}
 	}
 

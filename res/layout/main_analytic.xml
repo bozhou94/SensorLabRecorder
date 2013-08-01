@@ -57,12 +57,12 @@
         <TextView
             android:id="@+id/recent_stress_none"
             style="@style/RecentMobilityState"
-            android:drawableTop="@drawable/img_mobility_walk" />
+            android:drawableTop="@drawable/img_mobility_run" />
 
         <TextView
             android:id="@+id/recent_stress_not"
             style="@style/RecentMobilityState"
-            android:drawableTop="@drawable/img_mobility_run" />
+            android:drawableTop="@drawable/img_mobility_walk" />
     </LinearLayout>
     
     <TextView
