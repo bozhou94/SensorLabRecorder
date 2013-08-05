@@ -47,7 +47,7 @@ public class AudioRecorderService extends Service {
 
 	private static final String AUDIO_RECORDING_DIR = "rawaudio";
 	private static final int WAV_CHUNK_LENGTH_MS = 5 * 60 * 1000; // 5 minutes
-	private static final int BLACKOUT_NOTIFICATION_ID = 0;
+	private static final int BLACKOUT_NOTIFICATION_ID = 201308051;
 
 	private static final String TAG = "AudioRecorderService";
 	public static final String CALCULATE_PERCENTAGE = "edu.dartmouth.cs.audiorecorder.AudioRecorder.action.CALCULATE";
@@ -191,7 +191,6 @@ public class AudioRecorderService extends Service {
 		handler.removeCallbacks(Blackout);
 		c.close();
 		db.close();
-		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
 	}
 
 	@Override
@@ -204,7 +203,7 @@ public class AudioRecorderService extends Service {
 				new Intent(this, SensorPreferenceActivity.class), 0);
 		notification.setLatestEventInfo(this,
 				getText(R.string.local_service_label), text, contentIntent);
-		startForeground(R.string.foreground_service_started, notification);
+		startForeground(BLACKOUT_NOTIFICATION_ID, notification);
 
 		// If we get killed, after returning from here, restart
 		return START_STICKY;
@@ -218,7 +217,7 @@ public class AudioRecorderService extends Service {
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, SensorPreferenceActivity.class), 0);
 		notification.setLatestEventInfo(this,
-				getText(R.string.audiorecording_service_stopped), text,
+				getText(R.string.local_service_label), text,
 				contentIntent);
 
 		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
@@ -245,9 +244,7 @@ public class AudioRecorderService extends Service {
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, SensorPreferenceActivity.class), 0);
 		notification.setLatestEventInfo(this,
-				getText(R.string.audiorecording_service_started), text,
-				contentIntent);
-
+				getText(R.string.local_service_label), text, contentIntent);
 		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
 
 		if (mWavAudioRecorder.getState() != RehearsalAudioRecorder.State.RECORDING) {

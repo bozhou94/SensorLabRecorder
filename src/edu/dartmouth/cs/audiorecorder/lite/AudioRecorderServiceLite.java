@@ -35,7 +35,7 @@ public class AudioRecorderServiceLite extends Service {
 
 	private static final String AUDIO_RECORDING_DIR = "rawaudio";
 	private static final int WAV_CHUNK_LENGTH_MS = 5 * 60 * 1000; // 5 minutes
-	private static final int BLACKOUT_NOTIFICATION_ID = 0;
+	private static final int BLACKOUT_NOTIFICATION_ID = 201308050;
 
 	private static final String TAG = "AudioRecorderService";
 	private PowerManager.WakeLock mWl;
@@ -170,8 +170,8 @@ public class AudioRecorderServiceLite extends Service {
 				new Intent(this, SensorPreferenceActivity.class), 0);
 		notification.setLatestEventInfo(this,
 				getText(R.string.local_service_label), text, contentIntent);
-		startForeground(R.string.foreground_service_started, notification);
-
+		startForeground(BLACKOUT_NOTIFICATION_ID, notification);
+		
 		// If we get killed, after returning from here, restart
 		return START_STICKY;
 
@@ -201,7 +201,7 @@ public class AudioRecorderServiceLite extends Service {
 	}
 
 	private void startRecoding(boolean startTimer) {
-
+		
 		CharSequence text = getText(R.string.audiorecording_lite_service_started);
 		Notification notification = new Notification(R.drawable.micon_small,
 				text, System.currentTimeMillis());

@@ -62,6 +62,9 @@ public class RehearsalAudioRecorder {
 	private CircularBufferFeatExtractionInference<AudioData> cirBuffer;
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
+	
+	// Used for sampling at lower rates
+	private static final int rateMultiplier = 0;
 
 	/**
 	 * 
@@ -111,11 +114,11 @@ public class RehearsalAudioRecorder {
 
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			// if (tasks[count] == null || tasks[count].getStatus() ==
-			// AsyncTask.Status.FINISHED)
-			// (tasks[count] = new AudioReadingTask()).execute();
-			// count = (count == 4) ? 0 : count + 1;
-			new AudioReadingTask().execute();
+			//if (count == rateMultiplier) {
+				new AudioReadingTask().execute();
+				//count = 0;
+			//} else count++;
+			
 		}
 
 		@Override
