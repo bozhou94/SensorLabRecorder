@@ -9,10 +9,6 @@ import org.ohmage.probemanager.StressSenseProbeWriter;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
 
 import edu.dartmouth.cs.audiorecorder.CircularBufferFeatExtractionInference;
 import edu.dartmouth.cs.audiorecorder.analytics.StressActivity;
@@ -64,7 +60,6 @@ public class RehearsalAudioRecorderLite {
 	private AudioProcessing mAudioProcessingThread1;
 	private AudioProcessing mAudioProcessingThread2;
 
-
 	/**
 	 * 
 	 * Returns the state of the recorder in a RehearsalAudioRecord.State typed
@@ -94,8 +89,6 @@ public class RehearsalAudioRecorderLite {
 					&& numRead != AudioRecord.ERROR_BAD_VALUE) {
 				cirBuffer.insert(new AudioData(buffer, numRead));
 			} else {
-				Log.e(TAG,
-						"Error occured in updateListener, recording is aborted");
 				stop();
 			}
 		}
@@ -110,12 +103,13 @@ public class RehearsalAudioRecorderLite {
 
 		// private AudioReadingTask[] tasks = new AudioReadingTask[5];
 		// private int count;
-		
+
 		@Override
 		public void onPeriodicNotification(AudioRecord recorder) {
-			//if (tasks[count] == null || tasks[count].getStatus() == AsyncTask.Status.FINISHED)
-				//(tasks[count] = new AudioReadingTask()).execute();
-			//count = (count == 4) ? 0 : count + 1;
+			// if (tasks[count] == null || tasks[count].getStatus() ==
+			// AsyncTask.Status.FINISHED)
+			// (tasks[count] = new AudioReadingTask()).execute();
+			// count = (count == 4) ? 0 : count + 1;
 			new AudioReadingTask().execute();
 		}
 
@@ -135,8 +129,8 @@ public class RehearsalAudioRecorderLite {
 	 * but the state is set to ERROR
 	 * 
 	 */
-	public RehearsalAudioRecorderLite(
-			int audioSource, int sampleRate, int channelConfig, int audioFormat) {
+	public RehearsalAudioRecorderLite(int audioSource, int sampleRate,
+			int channelConfig, int audioFormat) {
 		aChannelConfig = channelConfig;
 
 		try {
@@ -175,20 +169,12 @@ public class RehearsalAudioRecorderLite {
 						channelConfig, audioFormat) * 2;
 				// Set frame period and timer interval accordingly
 				framePeriod = bufferSize / (2 * bSamples * nChannels / 8);
-				Log.w(TAG,
-						"Increasing buffer size to "
-								+ Integer.toString(bufferSize));
 			}
 
 			cirBuffer = new CircularBufferFeatExtractionInference<AudioData>(
 					null, 100);
 
 		} catch (Exception e) {
-			if (e.getMessage() != null) {
-				Log.e(TAG, e.getMessage());
-			} else {
-				Log.e(TAG, "Unknown error occured while initializing recording");
-			}
 			state = State.ERROR;
 		}
 	}
@@ -210,21 +196,13 @@ public class RehearsalAudioRecorderLite {
 					buffer = new short[framePeriod * bSamples / 16 * nChannels];
 					state = State.READY;
 				} else {
-					Log.e(TAG,
-							"prepare() method called on uninitialized recorder");
 					state = State.ERROR;
 				}
 			} else {
-				Log.e(TAG, "prepare() method called on illegal state");
 				release();
 				state = State.ERROR;
 			}
 		} catch (Exception e) {
-			if (e.getMessage() != null) {
-				Log.e(TAG, e.getMessage());
-			} else {
-				Log.e(TAG, "Unknown error occured in prepare()");
-			}
 			state = State.ERROR;
 		}
 	}
@@ -263,7 +241,6 @@ public class RehearsalAudioRecorderLite {
 				state = State.INITIALIZING;
 			}
 		} catch (Exception e) {
-			Log.e(TAG, e.getMessage());
 			state = State.ERROR;
 		}
 	}
@@ -285,7 +262,6 @@ public class RehearsalAudioRecorderLite {
 			aRecorder.read(buffer, 0, buffer.length);
 			state = State.RECORDING;
 		} else {
-			Log.e(TAG, "start() called on illegal state");
 			state = State.ERROR;
 		}
 	}
@@ -306,10 +282,10 @@ public class RehearsalAudioRecorderLite {
 			mAudioProcessingThread1 = null;
 			mAudioProcessingThread2.stopRunning();
 			mAudioProcessingThread2 = null;
+			System.gc();
 			aRecorder.stop();
 			state = State.STOPPED;
 		} else {
-			Log.e(TAG, "stop() called on illegal state");
 			state = State.ERROR;
 		}
 	}
@@ -481,11 +457,7 @@ public class RehearsalAudioRecorderLite {
 					// Log.d(TAG,this + "voiced features " + c + " " +
 					// Arrays.toString(f));
 					c++;
-				}
-				Log.d(TAG, this + "voiced features " + c + " " + s);// +
-																	// " "+
-																	// Arrays.toString(featureList.get(0)));
-				// time4 = System.currentTimeMillis();
+				}// time4 = System.currentTimeMillis();
 				// Log.d(TAG,this + "pitch features " + c + " " +
 				// Arrays.toString(pitch.toArray()));
 				// Log.d(TAG, "Inf time " + (time4 - time3) / 1000);

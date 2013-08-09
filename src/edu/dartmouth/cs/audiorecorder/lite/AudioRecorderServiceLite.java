@@ -8,7 +8,6 @@ import org.ohmage.mobility.blackout.base.TriggerDB;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
-import edu.dartmouth.cs.audiorecorder.AudioRecorderService;
 import edu.dartmouth.cs.audiorecorder.R;
 import edu.dartmouth.cs.audiorecorder.SensorPreferenceActivity;
 
@@ -20,15 +19,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.MediaRecorder.AudioSource;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class AudioRecorderServiceLite extends Service {
 
@@ -72,7 +68,6 @@ public class AudioRecorderServiceLite extends Service {
 
 	@Override
 	public void onCreate() {
-		Log.i(TAG, "onCreate()");
 		try {
 
 			mWl = ((PowerManager) getSystemService(Context.POWER_SERVICE))
@@ -144,7 +139,6 @@ public class AudioRecorderServiceLite extends Service {
 			mNotifManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 		} catch (Exception e) {
-			Log.e(TAG, e.getMessage());
 			e.printStackTrace();
 			stopSelf();
 		}
@@ -202,7 +196,6 @@ public class AudioRecorderServiceLite extends Service {
 				probeWriter.close();
 			}
 			mWavAudioRecorder.stop();
-			Log.i(TAG, "Recording stopped");
 		}
 	}
 
@@ -230,7 +223,6 @@ public class AudioRecorderServiceLite extends Service {
 			mWavAudioRecorder.start();
 
 			isRecording = true;
-			Log.i(TAG, "Recording started");
 		}
 	}
 
@@ -243,14 +235,12 @@ public class AudioRecorderServiceLite extends Service {
 			// means call running
 			if (extra
 					.equals(android.telephony.TelephonyManager.EXTRA_STATE_RINGING)) {
-				Log.i(TAG, "Incoming call, stop recording");
 				stopRecording(true);
 			}
 
 			if (extra
 					.equals(android.telephony.TelephonyManager.EXTRA_STATE_IDLE)) {
 				// strategy if the phone call end then start the audio service
-				Log.i(TAG, "Call ended, start recording");
 				startRecoding(true);
 			}
 		}
@@ -261,7 +251,6 @@ public class AudioRecorderServiceLite extends Service {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			Log.i(TAG, "Outgoing call, stopping recording");
 			stopRecording(true);
 		}
 	}

@@ -9,21 +9,16 @@ import org.ohmage.mobility.blackout.utils.SimpleTime;
 
 import edu.dartmouth.cs.audiorecorder.lite.AudioRecorderServiceLite;
 
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceClickListener;
-import android.util.Log;
 
 /**
  * This is the configuration portion of StressSense.
