@@ -56,6 +56,7 @@ public class AudioRecorderServiceLite extends Service {
 	private Cursor c;
 	private boolean isRecording = false;
 	public static StressSenseProbeWriter probeWriter;
+	public static boolean isRunning = false;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -68,6 +69,8 @@ public class AudioRecorderServiceLite extends Service {
 
 	@Override
 	public void onCreate() {
+		isRunning = true;
+		
 		try {
 
 			mWl = ((PowerManager) getSystemService(Context.POWER_SERVICE))
@@ -147,6 +150,7 @@ public class AudioRecorderServiceLite extends Service {
 
 	@Override
 	public void onDestroy() {
+		isRunning = false;
 		unregisterReceiver(mIncomingCallDetector);
 		unregisterReceiver(mOutgoingCallDetector);
 		unregisterReceiver(mTimeChangeReceiver);

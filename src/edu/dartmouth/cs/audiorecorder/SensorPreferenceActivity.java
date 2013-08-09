@@ -66,11 +66,11 @@ public class SensorPreferenceActivity extends PreferenceActivity implements
 		runNormal = getPreferenceScreen().getSharedPreferences().getBoolean(
 				ANALYTIC_KEY, false);
 		if (running) {
-			if (runNormal)
+			if (runNormal && !AudioRecorderService.isRunning)
 				SensorPreferenceActivity
 						.start(SensorPreferenceActivity.this
 								.getApplicationContext());
-			else
+			else if (!AudioRecorderServiceLite.isRunning)
 				SensorPreferenceActivity.startLite(SensorPreferenceActivity.this
 						.getApplicationContext());
 		}

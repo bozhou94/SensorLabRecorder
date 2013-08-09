@@ -87,6 +87,7 @@ public class AudioRecorderService extends Service {
 	// Previous classification
 	public static String text = "";
 	public static StressSenseProbeWriter probeWriter;
+	public static boolean isRunning = false;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -99,6 +100,7 @@ public class AudioRecorderService extends Service {
 
 	@Override
 	public void onCreate() {
+		isRunning = true;
 		Log.i(TAG, "onCreate()");
 		try {
 			prevTime = new SimpleDateFormat("h:mm a").format(Calendar
@@ -182,6 +184,7 @@ public class AudioRecorderService extends Service {
 
 	@Override
 	public void onDestroy() {
+		isRunning = false;
 		unregisterReceiver(mIncomingCallDetector);
 		unregisterReceiver(mOutgoingCallDetector);
 		unregisterReceiver(mTimeChangeReceiver);

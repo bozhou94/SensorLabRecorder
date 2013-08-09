@@ -282,7 +282,6 @@ public class RehearsalAudioRecorderLite {
 			mAudioProcessingThread1 = null;
 			mAudioProcessingThread2.stopRunning();
 			mAudioProcessingThread2 = null;
-			System.gc();
 			aRecorder.stop();
 			state = State.STOPPED;
 		} else {
