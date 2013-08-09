@@ -350,6 +350,7 @@ public class RehearsalAudioRecorderLite {
 		private AudioFeatureExtraction features;
 		private double[] audioFrameFeature;
 		private AudioData audioFromQueueData;
+		private boolean running;
 
 		public AudioProcessing() {
 			features = new AudioFeatureExtraction(frameSize, windowSize, 24,
@@ -373,13 +374,14 @@ public class RehearsalAudioRecorderLite {
 			// features for voice detection
 			pitch = new ArrayList<Double>();
 			featureList = new ArrayList<double[]>();
+			running = true;
 			// features = new AudioFeatureExtraction(col, row, 20, 8000);
 		}
 
 		@Override
 		public void run() {
 
-			while (true) {
+			while (running) {
 				// double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
 
 				audioFromQueueData = cirBuffer.deleteAndHandleData();

@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.ohmage.probemanager.ProbeBuilder;
-import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;

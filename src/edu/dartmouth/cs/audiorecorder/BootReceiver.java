@@ -10,8 +10,12 @@ public class BootReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context arg0, Intent arg1) {
 		if (PreferenceManager.getDefaultSharedPreferences(arg0).getBoolean(
-				SensorPreferenceActivity.IS_ON, false))
-			SensorPreferenceActivity.start(arg0);
+				SensorPreferenceActivity.IS_ON, false)) {
+			if (PreferenceManager.getDefaultSharedPreferences(arg0).getBoolean(
+					SensorPreferenceActivity.ANALYTIC_KEY, false))
+				SensorPreferenceActivity.start(arg0);
+			else SensorPreferenceActivity.startLite(arg0);
+		}
 	}
 
 }

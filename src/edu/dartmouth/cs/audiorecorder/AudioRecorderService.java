@@ -47,7 +47,7 @@ public class AudioRecorderService extends Service {
 
 	private static final String AUDIO_RECORDING_DIR = "rawaudio";
 	private static final int WAV_CHUNK_LENGTH_MS = 5 * 60 * 1000; // 5 minutes
-	private static final int BLACKOUT_NOTIFICATION_ID = 201308051;
+	private static final int BLACKOUT_NOTIFICATION_ID = 201308050;
 
 	private static final String TAG = "AudioRecorderService";
 	public static final String CALCULATE_PERCENTAGE = "edu.dartmouth.cs.audiorecorder.AudioRecorder.action.CALCULATE";
@@ -191,6 +191,7 @@ public class AudioRecorderService extends Service {
 		handler.removeCallbacks(Blackout);
 		c.close();
 		db.close();
+		mNotifManager.cancel(BLACKOUT_NOTIFICATION_ID);
 	}
 
 	@Override
