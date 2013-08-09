@@ -4,14 +4,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.ohmage.probemanager.ProbeBuilder;
-import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.os.AsyncTask;
 
 import edu.dartmouth.cs.audiorecorder.CircularBufferFeatExtractionInference;
-import edu.dartmouth.cs.audiorecorder.analytics.StressActivity;
 import edu.dartmouth.cs.mltoolkit.processing.*;
 
 public class RehearsalAudioRecorderLite {
@@ -218,8 +216,10 @@ public class RehearsalAudioRecorderLite {
 		if (state == State.RECORDING)
 			stop();
 
-		if (aRecorder != null)
+		if (aRecorder != null) {
 			aRecorder.release();
+			aRecorder = null;
+		}
 	}
 
 	/**

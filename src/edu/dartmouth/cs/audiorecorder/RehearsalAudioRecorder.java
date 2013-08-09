@@ -241,8 +241,10 @@ public class RehearsalAudioRecorder {
 		if (state == State.RECORDING)
 			stop();
 
-		if (aRecorder != null)
+		if (aRecorder != null) {
 			aRecorder.release();
+			aRecorder = null;
+		}
 	}
 
 	/**
