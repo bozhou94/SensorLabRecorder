@@ -10,6 +10,7 @@ import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
 import edu.dartmouth.cs.audiorecorder.analytics.AnalyticHistory;
+import edu.dartmouth.cs.audiorecorder.lite.RehearsalAudioRecorderLite;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -218,8 +219,7 @@ public class AudioRecorderService extends Service {
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, SensorPreferenceActivity.class), 0);
 		notification.setLatestEventInfo(this,
-				getText(R.string.local_service_label), text,
-				contentIntent);
+				getText(R.string.local_service_label), text, contentIntent);
 
 		mNotifManager.notify(BLACKOUT_NOTIFICATION_ID, notification);
 
@@ -325,13 +325,20 @@ public class AudioRecorderService extends Service {
 						AudioRecorderService.this).edit();
 				editor.putString(TOTAL_STRESS_KEY, stressTotals);
 				editor.commit();
+				stressTotals = "";
 				Intent i = new Intent();
 				i.setAction(DRAW_GRAPH);
 				sendBroadcast(i);
-				stressTotals = "";
-
+				if (isRecording) {
+					stopRecording(true);
+					mWavAudioRecorder.release();
+					mWavAudioRecorder = new RehearsalAudioRecorder(
+							AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
+							AudioFormat.ENCODING_PCM_16BIT);
+					startRecoding(true);
+				}
 			}
-			
+
 			if (curTime.substring(3, 5).equals("00")
 					|| curTime.substring(2, 4).equals("00")) {
 				Editor editor = PreferenceManager.getDefaultSharedPreferences(

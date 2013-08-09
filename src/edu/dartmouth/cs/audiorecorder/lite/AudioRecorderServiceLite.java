@@ -1,10 +1,14 @@
 package edu.dartmouth.cs.audiorecorder.lite;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import org.ohmage.mobility.blackout.BlackoutDesc;
 import org.ohmage.mobility.blackout.base.TriggerDB;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
+import edu.dartmouth.cs.audiorecorder.AudioRecorderService;
 import edu.dartmouth.cs.audiorecorder.R;
 import edu.dartmouth.cs.audiorecorder.SensorPreferenceActivity;
 
@@ -16,12 +20,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.media.AudioFormat;
 import android.media.MediaRecorder.AudioSource;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class AudioRecorderServiceLite extends Service {
@@ -76,8 +82,8 @@ public class AudioRecorderServiceLite extends Service {
 
 			probeWriter = new StressSenseProbeWriter(this);
 
-			mWavAudioRecorder = new RehearsalAudioRecorderLite(
-					AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
+			mWavAudioRecorder = new RehearsalAudioRecorderLite(AudioSource.MIC,
+					8000, AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT);
 			mIncomingCallDetector = new IncomingCallDetector();
 			mOutgoingCallDetector = new OutgoingCallDetector();
@@ -171,7 +177,7 @@ public class AudioRecorderServiceLite extends Service {
 		notification.setLatestEventInfo(this,
 				getText(R.string.local_service_label), text, contentIntent);
 		startForeground(BLACKOUT_NOTIFICATION_ID, notification);
-		
+
 		// If we get killed, after returning from here, restart
 		return START_STICKY;
 
@@ -201,7 +207,7 @@ public class AudioRecorderServiceLite extends Service {
 	}
 
 	private void startRecoding(boolean startTimer) {
-		
+
 		CharSequence text = getText(R.string.audiorecording_lite_service_started);
 		Notification notification = new Notification(R.drawable.micon_small,
 				text, System.currentTimeMillis());
@@ -265,6 +271,16 @@ public class AudioRecorderServiceLite extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			handler.post(Blackout);
+			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
+					.getInstance().getTime());
+			if (curTime.equals("3:00 PM") && isRecording) {
+				stopRecording(true);
+				mWavAudioRecorder.release();
+				mWavAudioRecorder = new RehearsalAudioRecorderLite(
+						AudioSource.MIC, 8000, AudioFormat.CHANNEL_IN_MONO,
+						AudioFormat.ENCODING_PCM_16BIT);
+				startRecoding(true);
+			}
 		}
 	}
 
