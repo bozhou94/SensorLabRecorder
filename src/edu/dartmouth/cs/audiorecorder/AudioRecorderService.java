@@ -320,15 +320,7 @@ public class AudioRecorderService extends Service {
 				handler.sendMessage(m);
 			}
 
-			if (curTime.equals("12:00 AM")) {
-				Editor editor = PreferenceManager.getDefaultSharedPreferences(
-						AudioRecorderService.this).edit();
-				editor.putString(TOTAL_STRESS_KEY, stressTotals);
-				editor.commit();
-				stressTotals = "";
-				Intent i = new Intent();
-				i.setAction(DRAW_GRAPH);
-				sendBroadcast(i);
+			if (curTime.equals("12:00 AM") || curTime.equals("12:00 PM")) {
 				if (isRecording) {
 					stopRecording(true);
 					mWavAudioRecorder.release();
@@ -337,8 +329,19 @@ public class AudioRecorderService extends Service {
 							AudioFormat.ENCODING_PCM_16BIT);
 					startRecoding(true);
 				}
+				if (curTime.equals("12:00 AM")) {
+					Editor editor = PreferenceManager
+							.getDefaultSharedPreferences(
+									AudioRecorderService.this).edit();
+					editor.putString(TOTAL_STRESS_KEY, stressTotals);
+					editor.commit();
+					stressTotals = "";
+					Intent i = new Intent();
+					i.setAction(DRAW_GRAPH);
+					sendBroadcast(i);
+				}
 			}
-
+			
 			if (curTime.substring(3, 5).equals("00")
 					|| curTime.substring(2, 4).equals("00")) {
 				Editor editor = PreferenceManager.getDefaultSharedPreferences(

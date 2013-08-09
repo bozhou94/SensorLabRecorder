@@ -273,7 +273,7 @@ public class AudioRecorderServiceLite extends Service {
 			handler.post(Blackout);
 			String curTime = new SimpleDateFormat("h:mm a").format(Calendar
 					.getInstance().getTime());
-			if (curTime.equals("3:00 PM") && isRecording) {
+			if ((curTime.equals("12:00 PM") || curTime.equals("12:00 AM")) && isRecording) {
 				stopRecording(true);
 				mWavAudioRecorder.release();
 				mWavAudioRecorder = new RehearsalAudioRecorderLite(

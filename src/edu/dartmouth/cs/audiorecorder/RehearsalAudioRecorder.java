@@ -303,6 +303,10 @@ public class RehearsalAudioRecorder {
 			return;
 		}
 		if (state == State.RECORDING) {
+			mAudioProcessingThread1.stopRunning();
+			mAudioProcessingThread1 = null;
+			mAudioProcessingThread2.stopRunning();
+			mAudioProcessingThread2 = null;
 			aRecorder.stop();
 			state = State.STOPPED;
 		} else {
@@ -351,6 +355,7 @@ public class RehearsalAudioRecorder {
 		private AudioFeatureExtraction features;
 		private double[] audioFrameFeature;
 		private AudioData audioFromQueueData;
+		private volatile boolean running;
 
 		public AudioProcessing() {
 			features = new AudioFeatureExtraction(frameSize, windowSize, 24,
@@ -374,13 +379,14 @@ public class RehearsalAudioRecorder {
 			// features for voice detection
 			pitch = new ArrayList<Double>();
 			featureList = new ArrayList<double[]>();
+			running = true;
 			// features = new AudioFeatureExtraction(col, row, 20, 8000);
 		}
 
 		@Override
 		public void run() {
 
-			while (true) {
+			while (running) {
 				// double time = 0, time1 = 0, time2 = 0, time3 = 0, time4 = 0;
 
 				audioFromQueueData = cirBuffer.deleteAndHandleData();
@@ -493,6 +499,9 @@ public class RehearsalAudioRecorder {
 			}
 		}
 
+		public void stopRunning() {
+			running = false;
+		}
 	}
 
 	/**

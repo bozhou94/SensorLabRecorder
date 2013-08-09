@@ -302,6 +302,10 @@ public class RehearsalAudioRecorderLite {
 			return;
 		}
 		if (state == State.RECORDING) {
+			mAudioProcessingThread1.stopRunning();
+			mAudioProcessingThread1 = null;
+			mAudioProcessingThread2.stopRunning();
+			mAudioProcessingThread2 = null;
 			aRecorder.stop();
 			state = State.STOPPED;
 		} else {
@@ -350,7 +354,7 @@ public class RehearsalAudioRecorderLite {
 		private AudioFeatureExtraction features;
 		private double[] audioFrameFeature;
 		private AudioData audioFromQueueData;
-		private boolean running;
+		private volatile boolean running;
 
 		public AudioProcessing() {
 			features = new AudioFeatureExtraction(frameSize, windowSize, 24,
@@ -494,6 +498,9 @@ public class RehearsalAudioRecorderLite {
 			}
 		}
 
+		public void stopRunning() {
+			running = false;
+		}
 	}
 
 	/**
