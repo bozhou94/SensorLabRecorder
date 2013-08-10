@@ -88,6 +88,8 @@ public class AudioRecorderService extends Service {
 	public static String text = "";
 	public static StressSenseProbeWriter probeWriter;
 	public static boolean isRunning = false;
+	public static ArrayStorage Storage1 = new ArrayStorage();
+	public static ArrayStorage Storage2 = new ArrayStorage();
 
 	@Override
 	public IBinder onBind(Intent intent) {

@@ -8,6 +8,7 @@ import org.ohmage.mobility.blackout.base.TriggerDB;
 import org.ohmage.mobility.blackout.utils.SimpleTime;
 import org.ohmage.probemanager.StressSenseProbeWriter;
 
+import edu.dartmouth.cs.audiorecorder.ArrayStorage;
 import edu.dartmouth.cs.audiorecorder.R;
 import edu.dartmouth.cs.audiorecorder.SensorPreferenceActivity;
 
@@ -57,6 +58,8 @@ public class AudioRecorderServiceLite extends Service {
 	private boolean isRecording = false;
 	public static StressSenseProbeWriter probeWriter;
 	public static boolean isRunning = false;
+	public static ArrayStorage Storage1 = new ArrayStorage();
+	public static ArrayStorage Storage2 = new ArrayStorage();
 
 	@Override
 	public IBinder onBind(Intent intent) {
